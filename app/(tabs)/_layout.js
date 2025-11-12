@@ -1,48 +1,76 @@
-import { Tabs } from "expo-router/tabs";
-import { Text } from "@gluestack-ui/themed";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { Tabs } from "expo-router"; 
+import { Avatar, AvatarFallbackText, AvatarImage, HStack, Text } from "@gluestack-ui/themed";
+import { Home, Users, Newspaper, BarChart2, User } from "lucide-react-native";
 
-const noHead = { headerShown: false };
+// Komponen avatar untuk header Komunitas
+function HeaderAvatar() {
+  return (
+    <HStack space="sm" alignItems="center" mr="$4">
+      <Text color="$gray800" fontWeight="$medium">Mahasiswa</Text>
+      <Avatar size="sm" bgColor="$blue500">
+        <AvatarFallbackText>K</AvatarFallbackText>
+      </Avatar>
+    </HStack>
+  );
+}
 
-const TabsLayout = () => {
+export default function TabsLayout() {
   return (
     <Tabs
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color }) => {
-          let icon;
-          switch (route.name) {
-            case "home":
-              icon = "water-outline";
-              break;
-            case "stats":
-              icon = "stats-chart-outline";
-              break;
-            case "community":
-              icon = "people-outline";
-              break;
-            case "news":
-              icon = "newspaper-outline";
-              break;
-            case "profile":
-              icon = "person-circle-outline";
-              break;
-          }
-          return <Ionicons name={icon} size={26} color={focused ? "blue" : color} />;
-        },
-        tabBarLabel: ({ children, color, focused }) => (
-          <Text mb="$1" color={focused ? "$blue600" : color}>
-            {children}
-          </Text>
-        ),
-      })}
+      screenOptions={{
+        tabBarActiveTintColor: '#3b82f6', 
+      }}
     >
-      <Tabs.Screen name="home" options={{ title: "Home", ...noHead }} />
-      <Tabs.Screen name="stats" options={{ title: "Statistik", ...noHead }} />
-      <Tabs.Screen name="community" options={{ title: "Komunitas", ...noHead }} />
-      <Tabs.Screen name="news" options={{ title: "Berita", ...noHead }} />
-      <Tabs.Screen name="profile" options={{ title: "Profil", ...noHead }} />
+      {/* 1. Home (Header Tampil) */}
+      <Tabs.Screen
+        name="home"
+        options={{
+          headerShown: true, // Header ditampilkan
+          headerTitle: "Home", // Judul header
+          tabBarIcon: ({ color }) => <Home color={color} />,
+        }}
+      />
+      
+      {/* 2. Stats (Header Hilang) */}
+      <Tabs.Screen
+        name="stats"
+        options={{
+          headerShown: true, // Header dihilangkan
+          headerTitle: "Statistika",
+          tabBarIcon: ({ color }) => <BarChart2 color={color} />,
+        }}
+      />
+
+      {/* 3. Community (Header Kustom) */}
+      <Tabs.Screen
+        name="community"
+        options={{
+          headerShown: true, // Header ditampilkan
+          headerTitle: "Komunitas", 
+          headerRight: () => <HeaderAvatar />, 
+          tabBarIcon: ({ color }) => <Users color={color} />,
+        }}
+      />
+      
+      {/* 4. News (Header Hilang) */}
+      <Tabs.Screen
+        name="news"
+        options={{
+          headerShown: true, // Header dihilangkan
+          headerTitle: "Berita",
+          tabBarIcon: ({ color }) => <Newspaper color={color} />,
+        }}
+      />
+      
+      {/* 5. Profile (Header Hilang) */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          headerShown: true, // Header dihilangkan
+          headerTitle: "Profile",
+          tabBarIcon: ({ color }) => <User color={color} />,
+        }}
+      />
     </Tabs>
   );
-};
-
-export default TabsLayout;
+}
