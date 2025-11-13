@@ -36,7 +36,7 @@ export default function TabsLayout() {
         name="stats"
         options={{
           headerShown: true, // Header dihilangkan
-          headerTitle: "Statistika",
+          headerTitle: "Kenali Cuaca dan Rekomendasi Minummu",
           tabBarIcon: ({ color }) => <BarChart2 color={color} />,
         }}
       />
