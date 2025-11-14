@@ -1,164 +1,96 @@
-// import { Center, Heading } from "@gluestack-ui/themed";
-
-// const Register = () => (
-//   <Center flex={1}>
-//     <Heading>Halaman Registrasi</Heading>
-//   </Center>
-// );
-
-// export default Register;
-
-
-// import { useRouter } from "expo-router";
-// import { Box, Input, InputField, Text, Button, ButtonText, Center } from "@gluestack-ui/themed";
-// import { useState } from "react";
-
-// export default function RegisterScreen() {
-//   const router = useRouter();
-//   const [name, setName] = useState("");
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-
-//   const handleRegister = () => {
-//     if (!name || !email || !password) {
-//       alert("Mohon isi semua field!");
-//       return;
-//     }
-//     alert("Registrasi berhasil!");
-//     router.replace("/login"); // kembali ke login setelah daftar
-//   };
-
-//   return (
-//     <Center flex={1} bg="$gray100" px="$6">
-//       <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
-//         <Text fontSize="$2xl" fontWeight="$bold" mb="$4" textAlign="center">
-//           Daftar Akun
-//         </Text>
-
-//         <Input variant="outline" mb="$3">
-//           <InputField
-//             placeholder="Nama Lengkap"
-//             value={name}
-//             onChangeText={setName}
-//           />
-//         </Input>
-
-//         <Input variant="outline" mb="$3">
-//           <InputField
-//             placeholder="Email"
-//             value={email}
-//             onChangeText={setEmail}
-//             autoCapitalize="none"
-//           />
-//         </Input>
-
-//         <Input variant="outline" mb="$4">
-//           <InputField
-//             placeholder="Password"
-//             value={password}
-//             onChangeText={setPassword}
-//             secureTextEntry
-//           />
-//         </Input>
-
-//         <Button onPress={handleRegister}>
-//           <ButtonText>Daftar</ButtonText>
-//         </Button>
-
-//         <Button
-//           variant="link"
-//           mt="$3"
-//           onPress={() => router.push("/login")}
-//         >
-//           <ButtonText color="$blue600">Sudah punya akun? Masuk</ButtonText>
-//         </Button>
-//       </Box>
-//     </Center>
-//   );
-// }
-
-
-import { useRouter } from "expo-router";
-import { Box, Input, InputField, Text, Button, ButtonText, Center } from "@gluestack-ui/themed";
+// app/register.js
 import { useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  Box,
+  Input,
+  InputField,
+  Text,
+  Button,
+  ButtonText,
+} from "@gluestack-ui/themed";
+import { useRouter } from "expo-router";
+import { UserStore } from "./userStore";
 
-export default function RegisterScreen() {
+export default function Register() {
   const router = useRouter();
-  const [name, setName] = useState("");
+
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      alert("Mohon isi semua field!");
+    // 1. Cek form kosong (semua harus diisi)
+    if (!username || !email || !password || !confirm) {
+      alert("Harap isi semua form");
       return;
     }
 
-    try {
-      // cek apakah sudah ada user sebelumnya
-      const existingUser = await AsyncStorage.getItem("user");
-      if (existingUser) {
-        const parsed = JSON.parse(existingUser);
-        if (parsed.email === email) {
-          alert("Email ini sudah terdaftar!");
-          return;
-        }
-      }
-
-      // simpan user baru
-      const newUser = { name, email, password };
-      await AsyncStorage.setItem("user", JSON.stringify(newUser));
-
-      alert("Registrasi berhasil!");
-      router.replace("/login"); // kembali ke login
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menyimpan data!");
+    // 2. Email harus mengandung '@'
+    if (!email.includes("@")) {
+      alert("Email harus mengandung '@'");
+      return;
     }
+
+    // 3. Password dan konfirmasi harus sama
+    if (password !== confirm) {
+      alert("Konfirmasi password tidak cocok");
+      return;
+    }
+
+    // 4. Simpan ke UserStore (AsyncStorage)
+    await UserStore.saveUser(username, email, password);
+
+    alert("Registrasi berhasil! Silakan login.");
+    router.replace("/login");
   };
 
   return (
-    <Center flex={1} bg="$gray100" px="$6">
-      <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
-        <Text fontSize="$2xl" fontWeight="$bold" mb="$4" textAlign="center">
-          Daftar Akun
-        </Text>
+    <Box flex={1} p="$6" justifyContent="center" bg="$white">
+      <Text fontSize="$3xl" fontWeight="$bold" mb="$4">
+        Daftar Akun
+      </Text>
 
-        <Input variant="outline" mb="$3">
-          <InputField
-            placeholder="Nama Lengkap"
-            value={name}
-            onChangeText={setName}
-          />
-        </Input>
+      <Input mb="$3">
+        <InputField
+          placeholder="Username"
+          value={username}
+          autoCapitalize="none"
+          onChangeText={setUsername}
+        />
+      </Input>
 
-        <Input variant="outline" mb="$3">
-          <InputField
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-        </Input>
+      <Input mb="$3">
+        <InputField
+          placeholder="Email"
+          keyboardType="email-address"
+          value={email}
+          autoCapitalize="none"
+          onChangeText={setEmail}
+        />
+      </Input>
 
-        <Input variant="outline" mb="$4">
-          <InputField
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </Input>
+      <Input mb="$3">
+        <InputField
+          placeholder="Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+      </Input>
 
-        <Button onPress={handleRegister}>
-          <ButtonText>Daftar</ButtonText>
-        </Button>
+      <Input mb="$5">
+        <InputField
+          placeholder="Konfirmasi Password"
+          secureTextEntry
+          value={confirm}
+          onChangeText={setConfirm}
+        />
+      </Input>
 
-        <Button variant="link" mt="$3" onPress={() => router.push("/login")}>
-          <ButtonText color="$blue600">Sudah punya akun? Masuk</ButtonText>
-        </Button>
-      </Box>
-    </Center>
+      <Button onPress={handleRegister}>
+        <ButtonText>Daftar</ButtonText>
+      </Button>
+    </Box>
   );
 }

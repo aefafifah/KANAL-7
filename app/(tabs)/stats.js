@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { ScrollView, Dimensions } from "react-native";
-import { Button, ButtonText } from "@gluestack-ui/themed";
 import {
   Text,
   Heading,
@@ -30,7 +29,7 @@ import {
   SunMedium,
   Snowflake,
 } from "lucide-react-native";
-import { useRouter } from "expo-router";
+
 dayjs.locale("id");
 const screenWidth = Dimensions.get("window").width;
 
@@ -60,7 +59,7 @@ const generateDataDaerah = () => {
 
 const dataPerDaerah = generateDataDaerah();
 
-// 🌤️ Daftar rekomendasi per jam
+// 🌤️ Data rekomendasi per jam
 const dataPerJam = {
   pagi: { suhu: 28, rekom: "0.5L air sebelum aktivitas", icon: Coffee },
   siang: { suhu: 34, rekom: "1L air, hindari terik matahari", icon: Sun },
@@ -69,18 +68,8 @@ const dataPerJam = {
 };
 
 const InfoHari = ({ hari, suhu, rekomLiter }) => (
-  <VStack
-    alignItems="center"
-    p={3}
-    bg="$blue50"
-    borderRadius={12}
-    m={1}
-    width={70}
-    shadow={1}
-  >
-    <Text bold color="$blue800">
-      {hari}
-    </Text>
+  <VStack alignItems="center" p={3} bg="$blue50" borderRadius={12} m={1} width={70} shadow={1}>
+    <Text bold color="$blue800">{hari}</Text>
     <Text color="$blue700">{suhu}°C</Text>
     <Text fontSize={10}>{rekomLiter}L</Text>
   </VStack>
@@ -136,9 +125,7 @@ const Stats = () => {
   const [reminder, setReminder] = useState({ icon: null, text: "" });
   const [waktuSekarang, setWaktuSekarang] = useState(null);
   const data = dataPerDaerah[selectedDaerah];
-  const router = useRouter();
-  const avgTemp =
-    data.reduce((sum, item) => sum + item.suhu, 0) / data.length || 0;
+  const avgTemp = data.reduce((sum, item) => sum + item.suhu, 0) / data.length || 0;
 
   // 🔥 Reminder otomatis
   useEffect(() => {
@@ -157,7 +144,7 @@ const Stats = () => {
     setReminder({ icon, text: pesan });
   }, [selectedDaerah]);
 
-  // 🕒 Deteksi waktu otomatis (pagi/siang/sore/malam)
+  // 🕒 Deteksi waktu otomatis
   useEffect(() => {
     const jam = new Date().getHours();
     let waktu = "pagi";
@@ -182,20 +169,14 @@ const Stats = () => {
   return (
     <ScrollView>
       <Center p={4} bg="$blue100" borderBottomRadius={20}>
-        <Heading color="$blue900" mb={2}>
-          Statistika Cuaca Jawa Timur
-        </Heading>
-        <Text color="$blue800">
-          {dayjs().format("dddd, DD MMMM YYYY")}
-        </Text>
+        <Heading color="$blue900" mb={2}>Statistika Cuaca Jawa Timur</Heading>
+        <Text color="$blue800">{dayjs().format("dddd, DD MMMM YYYY")}</Text>
         <ReminderBox />
       </Center>
 
       {/* Dropdown Pilihan Daerah */}
       <Center mt={4}>
-        <Text mb={2} color="$blue700" bold>
-          Pilih Daerah
-        </Text>
+        <Text mb={2} color="$blue700" bold>Pilih Daerah</Text>
         <Select selectedValue={selectedDaerah} onValueChange={(value) => setSelectedDaerah(value)}>
           <SelectTrigger variant="outline" width={250}>
             <SelectInput placeholder="Pilih daerah" />
@@ -233,33 +214,18 @@ const Stats = () => {
 
       {/* Rekomendasi otomatis per jam */}
       {waktuSekarang && (
-        <Center mt={6} mb={6}>
-          <Heading size="sm" mb={2}>
-            Rekomendasi Sekarang 🕒
-          </Heading>
-          <VStack
-            alignItems="center"
-            bg="$blue50"
-            p={4}
-            borderRadius={16}
-            width={200}
-            shadow={1}
-          >
+        <Center mt={6} mb={10}>
+          <Heading size="sm" mb={2}>Rekomendasi Sekarang 🕒</Heading>
+          <VStack alignItems="center" bg="$blue50" p={4} borderRadius={16} width={200} shadow={1}>
             <waktuSekarang.icon size={26} color="#2563eb" />
-            <Text bold color="$blue800" mt={2}>
-              {dayjs().format("HH:mm")} WIB
-            </Text>
-            <Text color="$blue700" mt={1}>
-              Suhu: {waktuSekarang.suhu}°C
-            </Text>
+            <Text bold color="$blue800" mt={2}>{dayjs().format("HH:mm")} WIB</Text>
+            <Text color="$blue700" mt={1}>Suhu: {waktuSekarang.suhu}°C</Text>
             <Text fontSize={12} textAlign="center" color="$blue600" mt={1}>
               {waktuSekarang.rekom}
             </Text>
           </VStack>
         </Center>
       )}
-      <Button mt="$8" size="lg" bg="$blue600" borderRadius="$2xl" onPress={() => router.push("../jurnalwater")}> <Droplets color="white" size={20} /> <ButtonText ml="$2" color="white"> Buka Jurnal Minum </ButtonText> </Button>
-       <Button mt="$8" size="lg" bg="$blue600" borderRadius="$2xl" onPress={() => router.push("../challengewater")}> <Droplets color="white" size={20} /> <ButtonText ml="$2" color="white"> Challenge Minum  </ButtonText> </Button>
     </ScrollView>
   );
 };

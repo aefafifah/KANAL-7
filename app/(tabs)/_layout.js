@@ -1,12 +1,119 @@
-import { Tabs } from "expo-router"; 
-import { Avatar, AvatarFallbackText, AvatarImage, HStack, Text } from "@gluestack-ui/themed";
-import { Home, Users, Newspaper, BarChart2, User } from "lucide-react-native";
+import { useState, useRef } from "react";
+import {
+  Animated,
+  Dimensions,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from "react-native";
+import { Tabs, useRouter } from "expo-router";
+import {
+  HStack,
+  Text,
+  Avatar,
+  AvatarFallbackText,
+  Pressable,
+} from "@gluestack-ui/themed";
+import {
+  Home,
+  Users,
+  Newspaper,
+  BarChart2,
+  User,
+  AlignJustify,
+} from "lucide-react-native";
 
-// Komponen avatar untuk header Komunitas
+const { width } = Dimensions.get("window");
+
+// 🔹 Drawer Menu
+function DrawerMenu({ visible, onClose, router }) {
+  const slideAnim = useRef(new Animated.Value(-width)).current;
+
+  if (visible) {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  } else {
+    Animated.timing(slideAnim, {
+      toValue: -width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }
+
+  return (
+    <Animated.View
+      style={[
+        styles.drawerContainer,
+        { transform: [{ translateX: slideAnim }] },
+      ]}
+    >
+      <View style={styles.drawerContent}>
+        <Text style={styles.drawerTitle}>Menu</Text>
+
+        {/* Jurnal Water */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/jurnalwater");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Jurnal Water</Text>
+        </TouchableOpacity>
+
+        {/* Challenge Water */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/challengewater");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Challenge Water</Text>
+        </TouchableOpacity>
+
+        {/* 🔥 Sleep Zone Cerdas (FITUR BARU) */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/sleepzone");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Zona Tidur Cerdas</Text>
+        </TouchableOpacity>
+
+        {/* Close */}
+        <TouchableOpacity
+          style={[styles.drawerButton, { backgroundColor: "#aaa" }]}
+          onPress={onClose}
+        >
+          <Text style={styles.drawerButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+}
+
+// 🔹 Tombol Hamburger
+function HeaderHamburger({ onPress }) {
+  return (
+    <Pressable onPress={onPress} style={{ marginLeft: 10 }}>
+      <AlignJustify size={24} color="black" />
+    </Pressable>
+  );
+}
+
+// 🔹 Header Avatar
 function HeaderAvatar() {
   return (
     <HStack space="sm" alignItems="center" mr="$4">
-      <Text color="$gray800" fontWeight="$medium">Mahasiswa</Text>
+      <Text color="$gray800" fontWeight="$medium">
+        Mahasiswa
+      </Text>
       <Avatar size="sm" bgColor="$blue500">
         <AvatarFallbackText>K</AvatarFallbackText>
       </Avatar>
@@ -14,63 +121,124 @@ function HeaderAvatar() {
   );
 }
 
+// 🔹 TAB LAYOUT
 export default function TabsLayout() {
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const router = useRouter();
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#3b82f6', 
-      }}
-    >
-      {/* 1. Home (Header Tampil) */}
-      <Tabs.Screen
-        name="home"
-        options={{
-          headerShown: true, // Header ditampilkan
-          headerTitle: "Home", // Judul header
-          tabBarIcon: ({ color }) => <Home color={color} />,
-        }}
-      />
-      
-      {/* 2. Stats (Header Hilang) */}
-      <Tabs.Screen
-        name="stats"
-        options={{
-          headerShown: true, // Header dihilangkan
-          headerTitle: "Kenali Cuaca dan Rekomendasi Minummu",
-          tabBarIcon: ({ color }) => <BarChart2 color={color} />,
-        }}
+    <>
+      {/* Drawer */}
+      <DrawerMenu
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        router={router}
       />
 
-      {/* 3. Community (Header Kustom) */}
-      <Tabs.Screen
-        name="community"
-        options={{
-          headerShown: true, // Header ditampilkan
-          headerTitle: "Komunitas", 
-          headerRight: () => <HeaderAvatar />, 
-          tabBarIcon: ({ color }) => <Users color={color} />,
+      {/* TAB BAR */}
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: "#3b82f6",
         }}
-      />
-      
-      {/* 4. News (Header Hilang) */}
-      <Tabs.Screen
-        name="news"
-        options={{
-          headerShown: true, // Header dihilangkan
-          headerTitle: "Berita",
-          tabBarIcon: ({ color }) => <Newspaper color={color} />,
-        }}
-      />
-      
-      {/* 5. Profile (Header Hilang) */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          headerShown: true, // Header dihilangkan
-          headerTitle: "Profile",
-          tabBarIcon: ({ color }) => <User color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            headerShown: true,
+            headerTitle: "Home",
+            headerLeft: () => (
+              <HeaderHamburger onPress={() => setDrawerVisible(true)} />
+            ),
+            tabBarIcon: ({ color }) => <Home color={color} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="stats"
+          options={{
+            headerShown: true,
+            headerTitle: "Kenali Cuaca & Rekomendasi Minum",
+            headerLeft: () => (
+              <HeaderHamburger onPress={() => setDrawerVisible(true)} />
+            ),
+            tabBarIcon: ({ color }) => <BarChart2 color={color} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="community"
+          options={{
+            headerShown: true,
+            headerTitle: "Komunitas",
+            headerLeft: () => (
+              <HeaderHamburger onPress={() => setDrawerVisible(true)} />
+            ),
+            headerRight: () => <HeaderAvatar />,
+            tabBarIcon: ({ color }) => <Users color={color} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="news"
+          options={{
+            headerShown: true,
+            headerTitle: "Berita",
+            headerLeft: () => (
+              <HeaderHamburger onPress={() => setDrawerVisible(true)} />
+            ),
+            tabBarIcon: ({ color }) => <Newspaper color={color} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="profile"
+          options={{
+            headerShown: true,
+            headerTitle: "Profile",
+            headerLeft: () => (
+              <HeaderHamburger onPress={() => setDrawerVisible(true)} />
+            ),
+            tabBarIcon: ({ color }) => <User color={color} />,
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
+
+// 🔹 Styles
+const styles = StyleSheet.create({
+  drawerContainer: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: width * 0.7,
+    backgroundColor: "#111",
+    zIndex: 999,
+    elevation: 10,
+  },
+  drawerContent: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+  },
+  drawerTitle: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 30,
+  },
+  drawerButton: {
+    backgroundColor: "#3b82f6",
+    borderRadius: 10,
+    paddingVertical: 10,
+    marginBottom: 15,
+    alignItems: "center",
+  },
+  drawerButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
