@@ -86,6 +86,28 @@ function DrawerMenu({ visible, onClose, router }) {
           <Text style={styles.drawerButtonText}>Zona Tidur Cerdas</Text>
         </TouchableOpacity>
 
+        {/* Streak */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/streak");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Streak Konsisten</Text>
+        </TouchableOpacity>
+
+        {/* Mood Harian */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/moodscreen");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Integrasi Mood Harian</Text>
+        </TouchableOpacity>
+
         {/* Close */}
         <TouchableOpacity
           style={[styles.drawerButton, { backgroundColor: "#aaa" }]}

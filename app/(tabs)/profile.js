@@ -1,72 +1,54 @@
-// import { Center, Heading } from "@gluestack-ui/themed";
-// import { Header } from "../../components";
-
-// const Profile = () => {
-//   return (
-//     <>
-//       <Center flex={1}>
-//         <Heading>Halaman Profil</Heading>
-//       </Center>
-//     </>
-//   );
-// };
-
-// export default Profile;
-
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Center, Box, Button, ButtonText, Text } from "@gluestack-ui/themed";
 import { useRouter } from "expo-router";
-import { Center, Heading, Box, Button, ButtonText, Text } from "@gluestack-ui/themed";
-
-const Profile = () => {
+export default function ProfileTab() {
   const router = useRouter();
+  const [name, setName] = useState("");
 
-  const handleLogout = () => {
-    // Nanti bisa ditambah logika hapus token dsb
-    router.replace("/login"); // kembali ke halaman login
+  useEffect(() => {
+    AsyncStorage.getItem("user").then((res) => {
+      if (res) {
+        const u = JSON.parse(res);
+        setName(u.username);
+      }
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    router.replace("/login");
   };
 
   return (
-    <Center flex={1} bg="$gray50" px="$6">
-      <Box
-        bg="$white"
-        rounded="$xl"
-        shadow="$2"
-        p="$6"
-        w="100%"
-        maxWidth={350}
-        alignItems="center"
-      >
-        <Heading mb="$2">Profil Pengguna</Heading>
-        <Text color="$gray600" mb="$6">
-          Kelola akun Anda di sini
+    <Center flex={1} px="$6" bg="$gray100">
+      <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
+
+        <Text fontSize="$2xl" fontWeight="bold" mb="$4">
+          <Text fontWeight="bold">{(name || "-").toUpperCase()}</Text>
         </Text>
 
-        {/* Data contoh profil */}
-        <Box w="100%" mb="$4">
-          <Text fontWeight="$bold" color="$gray700">
-            Nama:
-          </Text>
-          <Text mb="$3">Mahasiswa Kanal-7</Text>
-
-          <Text fontWeight="$bold" color="$gray700">
-            Email:
-          </Text>
-          <Text mb="$6">user@kanal7.com</Text>
-        </Box>
-
-        {/* Tombol Logout */}
-        <Button
-          bg="$red600"
-          onPress={handleLogout}
-          w="100%"
-          rounded="$lg"
-        >
-          <ButtonText color="$white" fontWeight="$bold">
-            Logout
-          </ButtonText>
+        <Button mb="$3" onPress={() => router.push("/profile")}>
+          <ButtonText>Lihat Profile</ButtonText>
         </Button>
+
+        <Button mb="$3" onPress={() => router.push("/profile/editpassword")}>
+          <ButtonText>Ubah Password</ButtonText>
+        </Button>
+
+        <Button mb="$3" onPress={() => router.push("/profile/language")}>
+          <ButtonText>Pilih Bahasa</ButtonText>
+        </Button>
+
+        <Button mb="$3" onPress={() => router.push("/profile/theme")}>
+          <ButtonText>Pilih Tema</ButtonText>
+        </Button>
+
+        {/* === TOMBOL LOGOUT === */}
+        <Button bg="$red600" mt="$4" onPress={handleLogout}>
+          <ButtonText style={{ color: "white" }}>Logout</ButtonText>
+        </Button>
+
       </Box>
     </Center>
   );
-};
-
-export default Profile;
+}
