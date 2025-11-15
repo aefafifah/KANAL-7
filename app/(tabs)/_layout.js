@@ -83,7 +83,7 @@ function DrawerMenu({ visible, onClose, router }) {
             router.push("/sleepzone");
           }}
         >
-          <Text style={styles.drawerButtonText}>Zona Tidur Cerdas</Text>
+          <Text style={styles.drawerButtonText}>smart sleep zone</Text>
         </TouchableOpacity>
 
         {/* Streak */}
@@ -105,8 +105,31 @@ function DrawerMenu({ visible, onClose, router }) {
             router.push("/moodscreen");
           }}
         >
-          <Text style={styles.drawerButtonText}>Integrasi Mood Harian</Text>
+          <Text style={styles.drawerButtonText}>Daily Mood</Text>
         </TouchableOpacity>
+
+        {/* Target Harian Dinamis */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+          onClose();
+          router.push("/targetharian");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Target Harian Dinamis</Text>
+        </TouchableOpacity>
+
+{/* Hydration Badges */}
+<TouchableOpacity
+  style={styles.drawerButton}
+  onPress={() => {
+    onClose();
+    router.push("/hydrationBadges");
+  }}
+>
+  <Text style={styles.drawerButtonText}>Hydration Badges</Text>
+</TouchableOpacity>
+
 
         {/* Close */}
         <TouchableOpacity
