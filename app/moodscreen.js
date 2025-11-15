@@ -1,256 +1,212 @@
 import React, { useEffect, useState } from "react";
-import {
-    View,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Box, Text, ScrollView, Pressable } from "@gluestack-ui/themed";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Text } from "@gluestack-ui/themed";
+import { SafeAreaView } from "@gluestack-ui/themed";
 import { MaterialIcons } from "@expo/vector-icons";
 
-
 const moods = [
-    { label: "Happy", emoji: "😄", color: "#FFD93D" },
-    { label: "Calm", emoji: "😊", color: "#6FCF97" },
-    { label: "Neutral", emoji: "😐", color: "#BDBDBD" },
-    { label: "Sad", emoji: "😢", color: "#56CCF2" },
-    { label: "Angry", emoji: "😡", color: "#EB5757" },
+  { label: "Happy", emoji: "😄", color: "#FFD93D" },
+  { label: "Calm", emoji: "😊", color: "#6FCF97" },
+  { label: "Neutral", emoji: "😐", color: "#BDBDBD" },
+  { label: "Sad", emoji: "😢", color: "#56CCF2" },
+  { label: "Angry", emoji: "😡", color: "#EB5757" },
 ];
 
-export default function MoodScreen() {
-    const [selectedMood, setSelectedMood] = useState(null);
-    const [history, setHistory] = useState([]);
-    const [isLocked, setIsLocked] = useState(false); // ⬅ mood lock
+export default function MoodScreen({ title = "How do you feel today?" }) {
+  const [selectedMood, setSelectedMood] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [isLocked, setIsLocked] = useState(false);
 
-    useEffect(() => {
-        loadMood();
-        loadHistory();
-    }, []);
+  useEffect(() => {
+    loadMood();
+    loadHistory();
+  }, []);
 
-    const loadMood = async () => {
-        const saved = await AsyncStorage.getItem("currentMood");
-        if (saved) {
-            setSelectedMood(JSON.parse(saved));
-            setIsLocked(true); // ⬅ kunci mood kalau sudah disimpan
-        }
+  const loadMood = async () => {
+    const saved = await AsyncStorage.getItem("currentMood");
+    if (saved) {
+      setSelectedMood(JSON.parse(saved));
+      setIsLocked(true);
+    }
+  };
+
+  const loadHistory = async () => {
+    const saved = await AsyncStorage.getItem("moodHistory");
+    if (saved) setHistory(JSON.parse(saved));
+  };
+
+  const saveMood = async () => {
+    if (!selectedMood || isLocked) return;
+
+    await AsyncStorage.setItem("currentMood", JSON.stringify(selectedMood));
+
+    const newEntry = {
+      mood: selectedMood,
+      time: new Date().toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
-    const loadHistory = async () => {
-        const saved = await AsyncStorage.getItem("moodHistory");
-        if (saved) setHistory(JSON.parse(saved));
-    };
+    const newHistory = [newEntry, ...history];
+    setHistory(newHistory);
 
-    const saveMood = async () => {
-        if (!selectedMood || isLocked) return; // ⬅ tidak bisa set ulang
+    await AsyncStorage.setItem("moodHistory", JSON.stringify(newHistory));
 
-        await AsyncStorage.setItem("currentMood", JSON.stringify(selectedMood));
+    setIsLocked(true);
+  };
 
-        const newEntry = {
-            mood: selectedMood,
-            time: new Date().toLocaleTimeString("id-ID", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-        };
+  const handleEdit = () => {
+    setIsLocked(false);
+    setSelectedMood(null);
+  };
 
-        const newHistory = [newEntry, ...history];
-        setHistory(newHistory);
+  const deleteHistoryItem = async (index) => {
+    const updated = history.filter((_, i) => i !== index);
+    setHistory(updated);
+    await AsyncStorage.setItem("moodHistory", JSON.stringify(updated));
+  };
 
-        await AsyncStorage.setItem("moodHistory", JSON.stringify(newHistory));
+  return (
+    <SafeAreaView bg="#fff" flex={1}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 20,
+          paddingTop: 5,
+          paddingBottom: 80,
+        }}
+      >
+        {/* Title */}
+        <Text fontSize={24} fontWeight="bold" mb={20}>
+          {title}
+        </Text>
 
-        setIsLocked(true); // ⬅ kunci setelah set mood
-    };
+        {/* Current Mood */}
+        <Box
+          bg="#f3f4f6"
+          borderRadius={16}
+          p={20}
+          alignItems="center"
+          mb={30}
+        >
+          {isLocked && selectedMood ? (
+            <>
+              <Text fontSize={60}>{selectedMood.emoji}</Text>
 
-    const handleEdit = () => {
-        setIsLocked(false); // ⬅ buka kunci
-        setSelectedMood(null); // kosongkan supaya bisa pilih lagi
-    };
+              <Text fontSize={22} fontWeight="bold" mt={10}>
+                {selectedMood.label}
+              </Text>
 
-    const deleteHistoryItem = async (index) => {
-        const updated = history.filter((_, i) => i !== index);
-        setHistory(updated);
-        await AsyncStorage.setItem("moodHistory", JSON.stringify(updated));
-    };
+              <Pressable
+                mt={10}
+                px={14}
+                py={8}
+                bg="#3b82f6"
+                borderRadius={12}
+                onPress={handleEdit}
+              >
+                <Text color="#fff" fontWeight="bold">
+                  Edit Mood
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text fontSize={16} color="#666">
+              No mood selected yet
+            </Text>
+          )}
+        </Box>
 
+        {/* Select Mood */}
+        <Text fontSize={18} fontWeight="bold" mb={10}>
+          Choose Your Mood
+        </Text>
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ padding: 20, paddingTop: 5, paddingBottom: 80 }}
+        <Box
+          flexDirection="row"
+          flexWrap="wrap"
+          justifyContent="space-between"
+        >
+          {moods.map((m) => (
+            <Pressable
+              key={m.label}
+              width="48%"
+              bg="#f5f5f5"
+              borderRadius={16}
+              py={20}
+              mb={15}
+              alignItems="center"
+              borderWidth={2}
+              borderColor={
+                selectedMood?.label === m.label ? m.color : "transparent"
+              }
+              disabled={isLocked}
+              opacity={isLocked ? 0.4 : 1}
+              onPress={() => setSelectedMood(m)}
             >
-                {/* Title */}
-                <Text style={styles.title}>How do you feel today?</Text>
+              <Text fontSize={36}>{m.emoji}</Text>
+              <Text mt={8} fontWeight="bold">
+                {m.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Box>
 
-                {/* Current Mood */}
-                <View style={styles.currentMoodCard}>
-                    {isLocked && selectedMood ? (
-                        <>
-                            <Text style={styles.currentEmoji}>{selectedMood.emoji}</Text>
-                            <Text style={styles.currentMoodText}>{selectedMood.label}</Text>
+        {/* Set Button */}
+        <Pressable
+          py={16}
+          borderRadius={16}
+          alignItems="center"
+          mb={20}
+          bg={
+            selectedMood && !isLocked
+              ? selectedMood.color
+              : "#999"
+          }
+          disabled={isLocked || !selectedMood}
+          onPress={saveMood}
+        >
+          <Text fontSize={18} fontWeight="bold" color="#fff">
+            {isLocked ? "Mood Set" : "Set Mood"}
+          </Text>
+        </Pressable>
 
-                            <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-                                <Text style={styles.editText}>Edit Mood</Text>
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <Text style={styles.noMoodText}>No mood selected yet</Text>
-                    )}
-                </View>
+        {/* History */}
+        <Text fontSize={18} fontWeight="bold" mb={10}>
+          Mood History
+        </Text>
 
-                {/* Select Mood Section */}
-                <Text style={styles.sectionTitle}>Choose Your Mood</Text>
+        {history.map((item, index) => (
+          <Box
+            key={index}
+            bg="#f3f4f6"
+            p={16}
+            borderRadius={14}
+            mb={10}
+            flexDirection="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box flexDirection="row" alignItems="center" gap={8}>
+              <Text fontSize={30}>{item.mood.emoji}</Text>
+              <Text fontSize={16} fontWeight="bold">
+                {item.mood.label}
+              </Text>
+            </Box>
 
-                <View style={styles.moodGrid}>
-                    {moods.map((m) => (
-                        <TouchableOpacity
-                            key={m.label}
-                            style={[
-                                styles.moodItem,
-                                selectedMood?.label === m.label && {
-                                    borderColor: m.color,
-                                    borderWidth: 3,
-                                },
-                                isLocked && { opacity: 0.4 }, // ⬅ block pick ketika locked
-                            ]}
-                            disabled={isLocked}
-                            onPress={() => setSelectedMood(m)}
-                        >
-                            <Text style={styles.emoji}>{m.emoji}</Text>
-                            <Text style={styles.moodLabel}>{m.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+            <Box alignItems="flex-end">
+              <Text fontSize={14} color="#666">
+                {item.time}
+              </Text>
 
-                {/* Set Mood Button */}
-                <TouchableOpacity
-                    style={[
-                        styles.setButton,
-                        selectedMood && !isLocked && { backgroundColor: selectedMood.color },
-                        (isLocked || !selectedMood) && { backgroundColor: "#999" }, // ⬅ disable
-                    ]}
-                    disabled={isLocked || !selectedMood} // ⬅ benar-benar disable
-                    onPress={saveMood}
-                >
-                    <Text style={styles.setButtonText}>
-                        {isLocked ? "Mood Set" : "Set Mood"}
-                    </Text>
-                </TouchableOpacity>
-
-                {/* History */}
-                <Text style={styles.sectionTitle}>Mood History</Text>
-
-                {/* {history.map((item, index) => (
-                    <View key={index} style={styles.historyCard}>
-                        <View style={styles.historyLeft}>
-                            <Text style={styles.historyEmoji}>{item.mood.emoji}</Text>
-                            <Text style={styles.historyLabel}>{item.mood.label}</Text>
-                        </View>
-                        <Text style={styles.historyTime}>{item.time}</Text>
-                    </View>
-                ))} */}
-
-                {history.map((item, index) => (
-                    <View key={index} style={styles.historyCard}>
-                        <View style={styles.historyLeft}>
-                            <Text style={styles.historyEmoji}>{item.mood.emoji}</Text>
-                            <Text style={styles.historyLabel}>{item.mood.label}</Text>
-                        </View>
-
-                        <View style={{ alignItems: "flex-end" }}>
-                            <Text style={styles.historyTime}>{item.time}</Text>
-
-                            <TouchableOpacity
-                                style={styles.deleteBtn}
-                                onPress={() => deleteHistoryItem(index)}
-                            >
-                                <MaterialIcons name="delete" size={18} color="#9c0707ff" />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                ))}
-
-            </ScrollView>
-        </SafeAreaView>
-    );
+              <Pressable mt={4} onPress={() => deleteHistoryItem(index)}>
+                <MaterialIcons name="delete" size={18} color="#9c0707ff" />
+              </Pressable>
+            </Box>
+          </Box>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff" },
-
-    title: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginBottom: 20,
-    },
-
-    currentMoodCard: {
-        backgroundColor: "#f3f4f6",
-        borderRadius: 16,
-        padding: 20,
-        alignItems: "center",
-        marginBottom: 30,
-    },
-
-    currentEmoji: { fontSize: 60 },
-    currentMoodText: { fontSize: 22, fontWeight: "bold", marginTop: 10 },
-    noMoodText: { fontSize: 16, color: "#666" },
-
-    editButton: {
-        marginTop: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        backgroundColor: "#3b82f6",
-        borderRadius: 12,
-    },
-    editText: { color: "#fff", fontWeight: "bold" },
-
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        marginBottom: 10,
-    },
-
-    moodGrid: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "space-between",
-    },
-
-    moodItem: {
-        width: "48%",
-        backgroundColor: "#f5f5f5",
-        borderRadius: 16,
-        paddingVertical: 20,
-        marginBottom: 15,
-        alignItems: "center",
-        borderWidth: 2,
-        borderColor: "transparent",
-    },
-
-    emoji: { fontSize: 36 },
-    moodLabel: { marginTop: 8, fontWeight: "bold" },
-
-    setButton: {
-        padding: 16,
-        borderRadius: 16,
-        alignItems: "center",
-        marginVertical: 20,
-    },
-    setButtonText: { fontSize: 18, fontWeight: "bold", color: "#fff" },
-
-    historyCard: {
-        backgroundColor: "#f3f4f6",
-        padding: 16,
-        borderRadius: 14,
-        marginBottom: 10,
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-    historyLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-    historyEmoji: { fontSize: 30 },
-    historyLabel: { fontSize: 16, fontWeight: "bold" },
-    historyTime: { fontSize: 14, color: "#666" },
-});

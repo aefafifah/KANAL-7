@@ -1,14 +1,10 @@
 import { useState, useRef } from "react";
-import {
-  Animated,
-  Dimensions,
-  TouchableOpacity,
-  View,
-  StyleSheet,
-} from "react-native";
+import { Animated, Dimensions, TouchableOpacity } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import {
+  Box,
   HStack,
+  VStack,
   Text,
   Avatar,
   AvatarFallbackText,
@@ -29,128 +25,126 @@ const { width } = Dimensions.get("window");
 function DrawerMenu({ visible, onClose, router }) {
   const slideAnim = useRef(new Animated.Value(-width)).current;
 
-  if (visible) {
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  } else {
-    Animated.timing(slideAnim, {
-      toValue: -width,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }
+  Animated.timing(slideAnim, {
+    toValue: visible ? 0 : -width,
+    duration: 300,
+    useNativeDriver: true,
+  }).start();
 
   return (
     <Animated.View
-      style={[
-        styles.drawerContainer,
-        { transform: [{ translateX: slideAnim }] },
-      ]}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: width * 0.7,
+        transform: [{ translateX: slideAnim }],
+        zIndex: 999,
+      }}
     >
-      <View style={styles.drawerContent}>
-        <Text style={styles.drawerTitle}>Menu</Text>
+      <Box flex={1} bg="#111" p="$6" pt="$16">
+        <Text color="white" fontSize="$2xl" mb="$8" fontWeight="$bold">
+          Menu
+        </Text>
 
-        {/* Jurnal Water */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/jurnalwater");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Jurnal Water</Text>
-        </TouchableOpacity>
+        <VStack space="md">
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/jurnalwater");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Jurnal Water</Text>
+          </Pressable>
 
-        {/* Challenge Water */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/challengewater");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Challenge Water</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/challengewater");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Challenge Water</Text>
+          </Pressable>
 
-        {/* 🔥 Sleep Zone Cerdas (FITUR BARU) */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/sleepzone");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>smart sleep zone</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/sleepzone");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Smart Sleep Zone</Text>
+          </Pressable>
 
-        {/* Streak */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/streak");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Streak Konsisten</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/streak");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Streak Konsisten</Text>
+          </Pressable>
 
-        {/* Mood Harian */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/moodscreen");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Daily Mood</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/moodscreen");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Daily Mood</Text>
+          </Pressable>
 
-        {/* Target Harian Dinamis */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/targetharian");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Target Harian Dinamis</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/targetharian");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">
+              Target Harian Dinamis
+            </Text>
+          </Pressable>
 
-        {/* Export Report */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/exportreport");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Export Hidrasi Report</Text>
-        </TouchableOpacity>
+          <Pressable
+            bg="#3b82f6"
+            p="$3"
+            rounded="$lg"
+            onPress={() => {
+              onClose();
+              router.push("/hydrationBadges");
+            }}
+          >
+            <Text color="white" fontWeight="$semibold">Hydration Badges</Text>
+          </Pressable>
 
-
-        {/* Hydration Badges */}
-        <TouchableOpacity
-          style={styles.drawerButton}
-          onPress={() => {
-            onClose();
-            router.push("/hydrationBadges");
-          }}
-        >
-          <Text style={styles.drawerButtonText}>Hydration Badges</Text>
-        </TouchableOpacity>
-
-
-        {/* Close */}
-        <TouchableOpacity
-          style={[styles.drawerButton, { backgroundColor: "#aaa" }]}
-          onPress={onClose}
-        >
-          <Text style={styles.drawerButtonText}>Close</Text>
-        </TouchableOpacity>
-      </View>
+          <Pressable
+            bg="#aaa"
+            p="$3"
+            rounded="$lg"
+            onPress={onClose}
+          >
+            <Text color="white" fontWeight="$semibold">Close</Text>
+          </Pressable>
+        </VStack>
+      </Box>
     </Animated.View>
   );
 }
@@ -158,7 +152,7 @@ function DrawerMenu({ visible, onClose, router }) {
 // 🔹 Tombol Hamburger
 function HeaderHamburger({ onPress }) {
   return (
-    <Pressable onPress={onPress} style={{ marginLeft: 10 }}>
+    <Pressable onPress={onPress} ml="$2">
       <AlignJustify size={24} color="black" />
     </Pressable>
   );
@@ -185,14 +179,12 @@ export default function TabsLayout() {
 
   return (
     <>
-      {/* Drawer */}
       <DrawerMenu
         visible={drawerVisible}
         onClose={() => setDrawerVisible(false)}
         router={router}
       />
 
-      {/* TAB BAR */}
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: "#3b82f6",
@@ -262,40 +254,3 @@ export default function TabsLayout() {
     </>
   );
 }
-
-// 🔹 Styles
-const styles = StyleSheet.create({
-  drawerContainer: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: width * 0.7,
-    backgroundColor: "#111",
-    zIndex: 999,
-    elevation: 10,
-  },
-  drawerContent: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  drawerTitle: {
-    color: "white",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 30,
-  },
-  drawerButton: {
-    backgroundColor: "#3b82f6",
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  drawerButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

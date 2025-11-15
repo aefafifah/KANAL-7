@@ -19,7 +19,7 @@ const WaterCard = ({ dailyGoal, onGoalComplete }) => {
   // Cek apakah goal sudah tercapai → kirim callback ke HomeScreen
   useEffect(() => {
     if (currentIntake >= dailyGoal && dailyGoal > 0) {
-      onGoalComplete(); // 🔥 INI MEMANGGIL UPDATE STREAK
+      onGoalComplete(); // 
     }
   }, [currentIntake]);
 

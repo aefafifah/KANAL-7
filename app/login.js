@@ -12,7 +12,13 @@ import {
 import { useRouter } from "expo-router";
 import { UserStore } from "./userStore";
 
-export default function Login() {
+export default function Login({
+  title = "Login",
+  buttonLabel = "Masuk",
+  onLoginSuccess,
+  showRegisterLink = true,
+  bgColor = "$white",
+}) {
   const router = useRouter();
 
   const [username, setUsername] = useState("");
@@ -20,26 +26,22 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    // 1. Cek form kosong
     if (!username || !email || !password) {
       alert("Harap isi semua form");
       return;
     }
 
-    // 2. Email harus mengandung '@'
     if (!email.includes("@")) {
       alert("Email harus mengandung '@'");
       return;
     }
 
-    // 3. Ambil data user tersimpan
     const user = await UserStore.getUser();
     if (!user) {
       alert("Akun tidak ditemukan, silakan daftar terlebih dahulu");
       return;
     }
 
-    // 4. Cek kecocokan username, email, password
     if (
       username !== user.username ||
       email !== user.email ||
@@ -49,14 +51,18 @@ export default function Login() {
       return;
     }
 
-    // 5. Login berhasil
+    // Jika ada props callback onLoginSuccess
+    if (onLoginSuccess) {
+      onLoginSuccess(user);
+    }
+
     router.replace("/(tabs)/home");
   };
 
   return (
-    <Box flex={1} p="$6" justifyContent="center" bg="$white">
+    <Box flex={1} p="$6" justifyContent="center" bg={bgColor}>
       <Text fontSize="$3xl" fontWeight="$bold" mb="$4">
-        Login
+        {title}
       </Text>
 
       <Input mb="$3">
@@ -88,14 +94,16 @@ export default function Login() {
       </Input>
 
       <Button mb="$3" onPress={handleLogin}>
-        <ButtonText>Masuk</ButtonText>
+        <ButtonText>{buttonLabel}</ButtonText>
       </Button>
 
-      <Pressable onPress={() => router.push("/register")}>
-        <Text mt="$2" textAlign="center" color="$blue600">
-          Belum punya akun? Daftar di sini
-        </Text>
-      </Pressable>
+      {showRegisterLink && (
+        <Pressable onPress={() => router.push("/register")}>
+          <Text mt="$2" textAlign="center" color="$blue600">
+            Belum punya akun? Daftar di sini
+          </Text>
+        </Pressable>
+      )}
     </Box>
   );
 }

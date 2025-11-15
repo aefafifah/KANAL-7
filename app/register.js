@@ -11,34 +11,58 @@ import {
 import { useRouter } from "expo-router";
 import { UserStore } from "./userStore";
 
+function Title({ text }) {
+  return (
+    <Text fontSize="$3xl" fontWeight="$bold" mb="$4">
+      {text}
+    </Text>
+  );
+}
+
+function InputLabel({ label, value, setValue, type = "text" }) {
+  return (
+    <>
+      <Text mb="$1">{label}</Text>
+      <Input mb="$3">
+        <InputField
+          placeholder={label}
+          value={value}
+          secureTextEntry={type === "password"}
+          keyboardType={type === "email" ? "email-address" : "default"}
+          autoCapitalize="none"
+          onChangeText={setValue}
+        />
+      </Input>
+    </>
+  );
+}
+
 export default function Register() {
   const router = useRouter();
 
+  // STATE
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
+  // HANDLE REGISTER
   const handleRegister = async () => {
-    // 1. Cek form kosong (semua harus diisi)
     if (!username || !email || !password || !confirm) {
       alert("Harap isi semua form");
       return;
     }
 
-    // 2. Email harus mengandung '@'
     if (!email.includes("@")) {
       alert("Email harus mengandung '@'");
       return;
     }
 
-    // 3. Password dan konfirmasi harus sama
     if (password !== confirm) {
       alert("Konfirmasi password tidak cocok");
       return;
     }
 
-    // 4. Simpan ke UserStore (AsyncStorage)
     await UserStore.saveUser(username, email, password);
 
     alert("Registrasi berhasil! Silakan login.");
@@ -47,46 +71,32 @@ export default function Register() {
 
   return (
     <Box flex={1} p="$6" justifyContent="center" bg="$white">
-      <Text fontSize="$3xl" fontWeight="$bold" mb="$4">
-        Daftar Akun
-      </Text>
+      {/* 🟦 Menggunakan Props */}
+      <Title text="Daftar Akun" />
 
-      <Input mb="$3">
-        <InputField
-          placeholder="Username"
-          value={username}
-          autoCapitalize="none"
-          onChangeText={setUsername}
-        />
-      </Input>
+      {/* 🟩 Input dengan props */}
+      <InputLabel label="Username" value={username} setValue={setUsername} />
 
-      <Input mb="$3">
-        <InputField
-          placeholder="Email"
-          keyboardType="email-address"
-          value={email}
-          autoCapitalize="none"
-          onChangeText={setEmail}
-        />
-      </Input>
+      <InputLabel
+        label="Email"
+        value={email}
+        setValue={setEmail}
+        type="email"
+      />
 
-      <Input mb="$3">
-        <InputField
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </Input>
+      <InputLabel
+        label="Password"
+        value={password}
+        setValue={setPassword}
+        type="password"
+      />
 
-      <Input mb="$5">
-        <InputField
-          placeholder="Konfirmasi Password"
-          secureTextEntry
-          value={confirm}
-          onChangeText={setConfirm}
-        />
-      </Input>
+      <InputLabel
+        label="Konfirmasi Password"
+        value={confirm}
+        setValue={setConfirm}
+        type="password"
+      />
 
       <Button onPress={handleRegister}>
         <ButtonText>Daftar</ButtonText>

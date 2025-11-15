@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Center, Box, Button, ButtonText, Text } from "@gluestack-ui/themed";
 import { useRouter } from "expo-router";
-export default function ProfileTab() {
+
+export default function ProfileTab({ title = "Profile" }) {
   const router = useRouter();
   const [name, setName] = useState("");
 
@@ -23,8 +24,13 @@ export default function ProfileTab() {
     <Center flex={1} px="$6" bg="$gray100">
       <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
 
+        {/* Contoh penggunaan props tanpa mengubah logika */}
+        <Text fontSize="$xl" color="$gray600" mb="$2">
+          {title}
+        </Text>
+
         <Text fontSize="$2xl" fontWeight="bold" mb="$4">
-          <Text fontWeight="bold">{(name || "-").toUpperCase()}</Text>
+          {(name || "-").toUpperCase()}
         </Text>
 
         <Button mb="$3" onPress={() => router.push("/profile")}>
@@ -45,7 +51,7 @@ export default function ProfileTab() {
 
         {/* === TOMBOL LOGOUT === */}
         <Button bg="$red600" mt="$4" onPress={handleLogout}>
-          <ButtonText style={{ color: "white" }}>Logout</ButtonText>
+          <ButtonText color="$white">Logout</ButtonText>
         </Button>
 
       </Box>

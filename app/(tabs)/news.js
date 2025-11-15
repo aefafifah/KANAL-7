@@ -1,211 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
+import { ScrollView, HStack, Heading } from "@gluestack-ui/themed";
+import NewsCard from "../../components/NewsCard";
 
-import { ScrollView, HStack, Heading, Text, Box, Spinner } from '@gluestack-ui/themed';
-
-// --- 1. KITA TETAP PAKAI 'NewsCard' ---
-
-import NewsCard from '../../components/NewsCard'; // Path yang sudah benar
-
-
+// Data dummy tetap sama
+const dummyArticles = [
+  {
+    id: "dummy-1",
+    title: "Ketahui Manfaat Minum Air Putih",
+    description: "Air putih memiliki peran penting dalam menjaga kesehatan tubuh.",
+    source: { name: "Kesehatan Kita" },
+    urlToImage: require("../../assets/gambarminum1.jpg"),
+  },
+  {
+    id: "dummy-2",
+    title: "Rahasia Hidup Sehat dan Bugar",
+    description: "Mengonsumsi air putih yang cukup setiap hari adalah kuncinya.",
+    source: { name: "Gaya Hidup" },
+    urlToImage: require("../../assets/gambarminum2.jpg"),
+  },
+  {
+    id: "dummy-3",
+    title: "Hidrasi Optimal Sepanjang Hari",
+    description: "Pastikan Anda terhidrasi dengan baik untuk mendukung fungsi organ.",
+    source: { name: "Tips Sehat" },
+    urlToImage: require("../../assets/gambarminum3.png"),
+  },
+  {
+    id: "dummy-4",
+    title: "Manfaat Air Setelah Olahraga",
+    description: "Mengganti cairan yang hilang dan mempercepat pemulihan otot.",
+    source: { name: "Sport Info" },
+    urlToImage: require("../../assets/gambarminum4.jpeg"),
+  },
+  {
+    id: "dummy-5",
+    title: "Minum Air Bersama Teman",
+    description: "Menjadi motivasi untuk menjaga hidrasi bersama.",
+    source: { name: "Komunitas Sehat" },
+    urlToImage: require("../../assets/gambarminum5.jpg"),
+  },
+  {
+    id: "dummy-6",
+    title: "8 Gelas Sehari: Kebutuhan Harian",
+    description: "Ikuti panduan minum 8 gelas air putih untuk tubuh bugar.",
+    source: { name: "Info Gizi" },
+    urlToImage: require("../../assets/gambarminum6.jpeg"),
+  },
+];
 
 const NewsScreen = () => {
-
-  const [articles, setArticles] = useState([]); // Kita sebut 'articles' agar konsisten
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState(null);
-
-
-
-  useEffect(() => {
-
-    const fetchDrinksAsNews = async () => {
-
-      setLoading(true);
-
-      setError(null);
-
-      try {
-
-        // --- 2. AMBIL DATA DARI API MINUMAN (GRATIS, TANPA KUNCI) ---
-
-        const response = await fetch(
-
-          `https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Non_Alcoholic`
-
-        );
-
-        const data = await response.json();
-
-
-
-        if (data && data.drinks) {
-
-          // --- 3. INI BAGIAN PENTING: UBAH FORMAT DATA MINUMAN ---
-
-          // Kita 'map' (ubah) data.drinks agar cocok dengan 'NewsCard'
-
-          const formattedNews = data.drinks.map(drink => {
-
-            return {
-
-              // 'NewsCard' butuh 'title', kita beri 'strDrink'
-
-              title: drink.strDrink,
-
-             
-
-              // 'NewsCard' butuh 'urlToImage', kita beri 'strDrinkThumb'
-
-              urlToImage: drink.strDrinkThumb,
-
-             
-
-              // 'NewsCard' butuh 'source.name', kita beri teks statis
-
-              source: { name: "Inspirasi Minuman" },
-
-             
-
-              // 'NewsCard' butuh 'description', kita beri teks statis
-
-              description: `Klik untuk melihat resep ${drink.strDrink}.`,
-
-             
-
-              // 'NewsCard' butuh 'url', kita buat link ke resepnya
-
-              url: `https://www.thecocktaildb.com/drink/${drink.idDrink}`
-
-            };
-
-          });
-
-         
-
-          setArticles(formattedNews); // Simpan data yang sudah diformat
-
-        } else {
-
-          setError('Gagal mengambil data minuman');
-
-        }
-
-      } catch (err) {
-
-        console.error("Error fetching data:", err);
-
-        setError('Terjadi kesalahan jaringan.');
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-
-
-    fetchDrinksAsNews();
-
-  }, []); // Hanya panggil sekali
-
-
-
-  if (loading) {
-
-    return (
-
-      <Box flex={1} justifyContent="center" alignItems="center" bg="$gray50">
-
-        <Spinner size="large" color="$blue500" />
-
-        <Text mt="$2" color="$gray600">Mencari inspirasi minuman...</Text>
-
-      </Box>
-
-    );
-
-  }
-
-
-
-  if (error) {
-
-    return (
-
-      <Box flex={1} justifyContent="center" alignItems="center" p="$4" bg="$gray50">
-
-        <Text color="$red500" textAlign="center">Error: {error}</Text>
-
-      </Box>
-
-    );
-
-  }
-
-
-
-  if (articles.length === 0) {
-
-    return (
-
-      <Box flex={1} justifyContent="center" alignItems="center" p="$4" bg="$gray50">
-
-        <Text color="$gray600">Tidak ada inspirasi yang ditemukan.</Text>
-
-      </Box>
-
-    );
-
-  }
-
-
+  // Tambahkan state sesuai persyaratan tugas
+  const [articles, setArticles] = useState(dummyArticles);
 
   return (
-
     <ScrollView bg="$gray50">
-
-      <Heading p="$4" pb="$0">Inspirasi Minuman</Heading>
-
-     
-
-      {/* 4. KITA TETAP MENGGUNAKAN 'NewsCard' DAN 'articles' */}
+      <Heading p="$4" pb="$0">Pentingnya Hidrasi</Heading>
 
       {articles[0] && <NewsCard post={articles[0]} size="large" />}
 
-
-
       {articles.length >= 3 && (
-
         <HStack>
-
           <NewsCard post={articles[1]} size="small" />
-
           <NewsCard post={articles[2]} size="small" />
-
         </HStack>
-
       )}
 
-     
-
-      {articles.slice(3).map((article, index) => (
-
-        <NewsCard key={article.url + index} post={article} size="large" />
-
+      {articles.slice(3).map((article) => (
+        <NewsCard key={article.id} post={article} size="large" />
       ))}
-
-
-
     </ScrollView>
-
   );
-
 };
-
-
 
 export default NewsScreen;

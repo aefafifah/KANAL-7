@@ -1,11 +1,19 @@
+// app/sleepzone.js
 import { useState, useEffect } from "react";
 import { Box, Text, Input, InputField, Button, ButtonText } from "@gluestack-ui/themed";
 import { saveSleepTime, getSleepTime } from "./sleepStore";
 
-export default function SleepZone() {
-  const [sleepTime, setSleepTime] = useState("");
-  const [wakeTime, setWakeTime] = useState("");
+export default function SleepZone({
+  title = "Zona Waktu Tidur Cerdas",
+  buttonLabel = "Simpan Zona Tidur",
+  bgColor = "$white",
+  defaultValues = { sleep: "", wake: "" },
+  onSaved = () => {},
+}) {
+  const [sleepTime, setSleepTime] = useState(defaultValues.sleep);
+  const [wakeTime, setWakeTime] = useState(defaultValues.wake);
 
+  // Load data dari storage jika ada
   useEffect(() => {
     loadExisting();
   }, []);
@@ -26,12 +34,15 @@ export default function SleepZone() {
 
     await saveSleepTime(sleepTime, wakeTime);
     alert("Zona waktu tidur tersimpan!");
+
+    // panggil callback props
+    onSaved({ sleepTime, wakeTime });
   };
 
   return (
-    <Box flex={1} p="$6">
+    <Box flex={1} p="$6" bg={bgColor}>
       <Text fontSize="$3xl" bold mb="$4">
-        Zona Waktu Tidur Cerdas
+        {title}
       </Text>
 
       <Text mb="$2">Jam Tidur (contoh: 22:00)</Text>
@@ -53,7 +64,7 @@ export default function SleepZone() {
       </Input>
 
       <Button onPress={handleSave}>
-        <ButtonText>Simpan Zona Tidur</ButtonText>
+        <ButtonText>{buttonLabel}</ButtonText>
       </Button>
     </Box>
   );

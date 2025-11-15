@@ -1,23 +1,17 @@
-import { Pressable, Linking } from 'react-native';
-import { Box, Image, Text, VStack, Heading } from '@gluestack-ui/themed';
+import { Box, Image, Text, VStack, Heading, Pressable } from '@gluestack-ui/themed';
 
-// Komponen ini menerima 'post' (data berita) dan 'size' (large/small)
 const NewsCard = ({ post, size = 'large' }) => {
   
-  // Fungsi untuk membuka link berita di browser
   const handlePress = () => {
-    if (post.url) {
-      Linking.openURL(post.url);
-    }
+    alert(`Membuka info untuk: ${post.title}`);
   };
 
-  // Tampilan untuk kartu besar
   if (size === 'large') {
     return (
-      <Pressable onPress={handlePress}>
+      <Pressable onPress={handlePress}> 
         <Box rounded="$lg" m="$3" shadow="$2" bg="$white" overflow="hidden">
           <Image 
-            source={{ uri: post.urlToImage || 'https://via.placeholder.com/600x400.png?text=News' }} 
+            source={post.urlToImage}
             alt={post.title}
             h={200}
             w="100%"
@@ -36,22 +30,29 @@ const NewsCard = ({ post, size = 'large' }) => {
     );
   }
 
-  // Tampilan untuk kartu kecil
   return (
     <Pressable onPress={handlePress} style={{ flex: 1 }}>
       <Box rounded="$lg" m="$2" shadow="$2" bg="$white" overflow="hidden" flex={1}>
         <Image 
-          source={{ uri: post.urlToImage || 'https://via.placeholder.com/400x300.png?text=News' }} 
+          source={post.urlToImage}
           alt={post.title}
           h={120}
           w="100%"
         />
-        <VStack p="$3" space="xs">
-          <Text size="xs" color="$blue500" fontWeight="$bold" textTransform="uppercase">
-            {post.source.name}
-          </Text>
-          <Heading size="sm" noOfLines={3}>{post.title}</Heading>
-        </VStack>
+
+        {/* FIX: Overlay diganti dengan Box */}
+        <Box
+          position="absolute"
+          bottom={0}
+          left={0}
+          right={0}
+          p="$2"
+          bg="rgba(0, 0, 0, 0.3)"
+        >
+          <Heading size="sm" color="$white" noOfLines={2}>
+            {post.title}
+          </Heading>
+        </Box>
       </Box>
     </Pressable>
   );

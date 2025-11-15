@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { Box, Text, Button, ButtonText, HStack } from "@gluestack-ui/themed";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function HydrationBadges() {
+export default function HydrationBadges({
+  title = "Badge Pencapaian Hidrasi 🏅",
+  microBreakLabel = "Micro-break",
+  moodLabel = "Mood Journal",
+}) {
   const [microBreaks, setMicroBreaks] = useState(0);
   const [moodLogs, setMoodLogs] = useState(0);
   const [badges, setBadges] = useState([]);
@@ -43,7 +47,7 @@ export default function HydrationBadges() {
     saveAll(microBreaks, newCount, badges);
   };
 
-  // Cek apakah ada badge baru yang bisa didapat
+  // Cek badge baru
   const checkBadges = async () => {
     let newBadges = [...badges];
 
@@ -75,7 +79,7 @@ export default function HydrationBadges() {
     saveAll(microBreaks, moodLogs, newBadges);
   };
 
-  // 🔥 RESET BADGE (fitur baru)
+  // Reset data
   const resetBadges = async () => {
     await AsyncStorage.setItem("microBreaks", "0");
     await AsyncStorage.setItem("moodLogs", "0");
@@ -91,12 +95,12 @@ export default function HydrationBadges() {
   return (
     <Box flex={1} p="$6">
       <Text fontSize="$3xl" bold mb="$4">
-        Badge Pencapaian Hidrasi 🏅
+        {title}
       </Text>
 
       {/* Progress */}
-      <Text mb="$2">Micro-break: {microBreaks}</Text>
-      <Text mb="$4">Mood Journal: {moodLogs}</Text>
+      <Text mb="$2">{microBreakLabel}: {microBreaks}</Text>
+      <Text mb="$4">{moodLabel}: {moodLogs}</Text>
 
       {/* Buttons */}
       <HStack space="md" mb="$4">
@@ -114,7 +118,7 @@ export default function HydrationBadges() {
         <ButtonText>Cek Badge Baru</ButtonText>
       </Button>
 
-      {/* RESET BADGE */}
+      {/* Reset Button */}
       <Button bgColor="$red500" onPress={resetBadges}>
         <ButtonText>Reset Semua Badge</ButtonText>
       </Button>
@@ -129,7 +133,9 @@ export default function HydrationBadges() {
           <Text>Tidak ada badge.</Text>
         ) : (
           badges.map((b, index) => (
-            <Text key={index} fontSize="$lg">• {b}</Text>
+            <Text key={index} fontSize="$lg">
+              • {b}
+            </Text>
           ))
         )}
       </Box>

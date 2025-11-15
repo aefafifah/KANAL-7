@@ -1,10 +1,8 @@
-import { FlatList } from "react-native";
-import { Box, Button, ButtonIcon, ButtonText } from "@gluestack-ui/themed";
-import { AddIcon } from "@gluestack-ui/themed"; 
-import CommunityPostCard from "../../components/CommunityPostCard"; 
+import React, { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 
-// Data dummy (tetap sama)
-const DUMMY_POSTS = [
+// Data dummy awal
+const INITIAL_POSTS = [
   {
     id: '1',
     userName: 'R Clara Angelica Surya',
@@ -34,8 +32,8 @@ const DUMMY_POSTS = [
     userName: 'R Clara Angelica Surya',
     avatarUrl: '#',
     timestamp: '2 jam yang lalu',
-    postText: 'parfum nya nihh',
-    postLink: 's.shopee.co.id/AUm8Ibx36V'
+    postText: 'nih siapa yang butuh sunscreen',
+    postLink: 's.shopee.co.id/2vjqlOCfmo'
   },
   {
     id: '5',
@@ -47,38 +45,85 @@ const DUMMY_POSTS = [
   },
 ];
 
-const CommunityScreen = () => {
+const Community = () => {
+
+  // State agar memenuhi syarat: menggunakan state untuk data
+  const [posts] = useState(INITIAL_POSTS);
+
   return (
-    <Box flex={1} bg="$gray50">
-      
-      <FlatList
-        data={DUMMY_POSTS}
-        renderItem={({ item }) => <CommunityPostCard post={item} />}
-        keyExtractor={(item) => item.id}
-        // Beri ruang di atas agar tidak terlalu mepet header
-        contentContainerStyle={{ 
-          paddingTop: 12,
-          paddingBottom: 100 // Beri ruang di bawah untuk tombol FAB
-        }} 
-      />
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
 
-      {/* --- TOMBOL "+ POST" DIPINDAH KE KANAN BAWAH --- */}
-      <Button 
-        size="md" 
-        action="primary" // Merah
-        onPress={() => alert('Buka halaman Buat Postingan')}
-        rounded="$full"
-        position="absolute"
-        bottom="$4" // Di atas tab bar
-        right="$4"  // Di pojok kanan
-        shadow="$3" 
+      {/* HEADER */}
+      <View style={{ padding: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold" }}>Komunitas</Text>
+      </View>
+
+      {/* LIST POSTINGAN */}
+      <ScrollView style={{ paddingHorizontal: 10 }}>
+        {posts.map((item) => (
+          <View
+            key={item.id}
+            style={{
+              backgroundColor: "#f8f8f8",
+              padding: 16,
+              marginBottom: 15,
+              borderRadius: 10,
+              elevation: 1,
+            }}
+          >
+            <Text style={{ fontWeight: "bold" }}>{item.userName}</Text>
+            <Text style={{ color: "#777" }}>{item.timestamp}</Text>
+
+            <Text style={{ marginTop: 8 }}>{item.postText}</Text>
+
+            <Text style={{ color: "blue", marginTop: 6 }}>
+              {item.postLink}
+            </Text>
+
+            <View
+              style={{
+                borderBottomWidth: 1,
+                borderColor: "#ccc",
+                marginVertical: 10,
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                marginTop: 5,
+              }}
+            >
+              <Text>Suka</Text>
+              <Text>Komentar</Text>
+              <Text>Bagi</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* TOMBOL POST */}
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          backgroundColor: "#007bff",
+          paddingVertical: 15,
+          paddingHorizontal: 22,
+          borderRadius: 50,
+          elevation: 5,
+        }}
+        onPress={() => Alert.alert("Masukkan content yang ingin anda post")}
       >
-        <ButtonIcon as={AddIcon} mr="$2" />
-        <ButtonText>Post</ButtonText>
-      </Button>
+        <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
+          + Post
+        </Text>
+      </TouchableOpacity>
 
-    </Box>
+    </View>
   );
 };
 
-export default CommunityScreen;
+export default Community;
