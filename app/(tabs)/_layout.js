@@ -112,23 +112,35 @@ function DrawerMenu({ visible, onClose, router }) {
         <TouchableOpacity
           style={styles.drawerButton}
           onPress={() => {
-          onClose();
-          router.push("/targetharian");
+            onClose();
+            router.push("/targetharian");
           }}
         >
           <Text style={styles.drawerButtonText}>Target Harian Dinamis</Text>
         </TouchableOpacity>
 
-{/* Hydration Badges */}
-<TouchableOpacity
-  style={styles.drawerButton}
-  onPress={() => {
-    onClose();
-    router.push("/hydrationBadges");
-  }}
->
-  <Text style={styles.drawerButtonText}>Hydration Badges</Text>
-</TouchableOpacity>
+        {/* Export Report */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/exportreport");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Export Hidrasi Report</Text>
+        </TouchableOpacity>
+
+
+        {/* Hydration Badges */}
+        <TouchableOpacity
+          style={styles.drawerButton}
+          onPress={() => {
+            onClose();
+            router.push("/hydrationBadges");
+          }}
+        >
+          <Text style={styles.drawerButtonText}>Hydration Badges</Text>
+        </TouchableOpacity>
 
 
         {/* Close */}
