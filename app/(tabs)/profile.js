@@ -1,36 +1,95 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Center, Box, Button, ButtonText, Text } from "@gluestack-ui/themed";
+import { Center, Box, Button, ButtonText, Text, HStack } from "@gluestack-ui/themed";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+
+// Firebase
+import { signOut } from "firebase/auth";
+import { get, ref as dbRef } from "firebase/database";
+import { auth, db } from "../../src/config/firebase";
 
 export default function ProfileTab({ title = "Profile" }) {
   const router = useRouter();
-  const [name, setName] = useState("");
 
-  useEffect(() => {
-    AsyncStorage.getItem("user").then((res) => {
-      if (res) {
-        const u = JSON.parse(res);
-        setName(u.username);
-      }
-    });
-  }, []);
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        try {
+          const uid = auth.currentUser?.uid;
+
+          // 1) cepat dari session/cache
+          const local = await AsyncStorage.getItem("user");
+          if (local) {
+            const u = JSON.parse(local);
+            setUsername(u.username || u.nama || "");
+            setDisplayName(u.displayName || u.nama || u.username || "");
+          }
+
+          // 2) sumber utama: RTDB (ambil displayName terbaru)
+          if (uid) {
+            const snap = await get(dbRef(db, `users/${uid}`));
+            if (snap.exists()) {
+              const p = snap.val();
+
+              const usernameDB = (p?.username || p?.nama || "").trim();
+              const displayNameDB = (p?.displayName || "").trim();
+              const displayNameFinal = displayNameDB || usernameDB;
+
+              setUsername(usernameDB);
+              setDisplayName(displayNameFinal);
+
+              // sinkronkan session (tanpa password)
+              await AsyncStorage.setItem(
+                "user",
+                JSON.stringify({
+                  uid,
+                  username: usernameDB,
+                  displayName: displayNameFinal,
+                  email: auth.currentUser?.email || p?.email || "",
+                  status: p?.status || "user",
+                })
+              );
+            }
+          }
+        } catch (e) {
+          console.log("PROFILE TAB LOAD ERROR:", e);
+        }
+      };
+
+      load();
+    }, [])
+  );
 
   const handleLogout = async () => {
-    router.replace("/login");
+    try {
+      await signOut(auth);
+      await AsyncStorage.removeItem("user");
+      await AsyncStorage.removeItem("profilePhoto"); // foto lokal hilang setelah logout
+      router.replace("/login");
+    } catch (e) {
+      alert("Logout gagal");
+    }
   };
 
   return (
     <Center flex={1} px="$6" bg="$gray100">
       <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
-
-        {/* Contoh penggunaan props tanpa mengubah logika */}
         <Text fontSize="$xl" color="$gray600" mb="$2">
           {title}
         </Text>
 
-        <Text fontSize="$2xl" fontWeight="bold" mb="$4">
-          {(name || "-").toUpperCase()}
+        {/* Utama: displayName */}
+        <Text fontSize="$2xl" fontWeight="bold">
+          {displayName || "-"}
+        </Text>
+
+        {/* Secondary: @username */}
+        <Text mt="$1" mb="$4" color="$gray500">
+          {username ? `@${username}` : ""}
         </Text>
 
         <Button mb="$3" onPress={() => router.push("/profile")}>
@@ -49,11 +108,9 @@ export default function ProfileTab({ title = "Profile" }) {
           <ButtonText>Pilih Tema</ButtonText>
         </Button>
 
-        {/* === TOMBOL LOGOUT === */}
         <Button bg="$red600" mt="$4" onPress={handleLogout}>
           <ButtonText color="$white">Logout</ButtonText>
         </Button>
-
       </Box>
     </Center>
   );
