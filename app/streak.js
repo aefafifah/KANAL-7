@@ -15,8 +15,8 @@ export default function StreakScreen({
   iconBig = "https://cdn-icons-png.flaticon.com/256/8722/8722283.png",
   iconSmall = "https://cdn-icons-png.flaticon.com/256/8722/8722283.png",
   iconLocked = "https://cdn-icons-png.flaticon.com/512/61/61457.png",
-  headerColor = "#3BA3FF",
-  backgroundColor = "#E7F2FF",
+  headerColor = "#ffffffff",
+  backgroundColor = "#EEF2FF",
 }) {
   const [level, setLevel] = useState(1);
 
@@ -78,25 +78,29 @@ export default function StreakScreen({
         justifyContent="flex-end"
         borderBottomLeftRadius={32}
         borderBottomRightRadius={32}
+        borderWidth={10}
+        borderColor={backgroundColor}
+        mb="$4"
+        rounded="$2xl"
       >
         {/* BIG MEDAL ICON */}
         <Image
           source={{ uri: iconBig }}
-          style={{ width: 160, height: 160, marginBottom: 10 }}
+          style={{ width: 130, height: 130, marginBottom: 10 }}
           resizeMode="contain"
         />
 
-        <Text fontSize="$2xl" color="white" fontWeight="bold">
+        <Text fontSize="$2xl" fontWeight="bold" color="black">
           Streak Level {level}
         </Text>
 
-        <Text color="white">
+        <Text color="black">
           You've maintained {level}-day consistency!
         </Text>
       </Box>
 
       {/* WHITE CONTENT */}
-      <Box flex={1} mt={-20} bg="white" roundedTop="$3xl" p="$4">
+      <Box flex={1} mt={-20} bg="" roundedTop="$3xl" p="$4">
         <Text fontWeight="bold" fontSize="$lg" mb="$4">
           Your Streak Progress
         </Text>

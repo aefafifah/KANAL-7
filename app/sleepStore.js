@@ -1,22 +1,37 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const KEY = "sleep-time";
+
+// =====================
+// SAVE SLEEP TIME (PER HARI)
+// =====================
 export const saveSleepTime = async (sleepTime, wakeTime) => {
-  try {
-    await AsyncStorage.setItem(
-      "sleep",
-      JSON.stringify({ sleepTime, wakeTime })
-    );
-  } catch (error) {
-    console.log("Gagal menyimpan zona tidur:", error);
-  }
+  const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+
+  const data = {
+    sleepTime,
+    wakeTime,
+    date: today,
+  };
+
+  await AsyncStorage.setItem(KEY, JSON.stringify(data));
 };
 
+// =====================
+// GET SLEEP TIME (CEK HARI)
+// =====================
 export const getSleepTime = async () => {
-  try {
-    const data = await AsyncStorage.getItem("sleep");
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.log("Gagal mengambil zona tidur:", error);
-    return null;
+  const json = await AsyncStorage.getItem(KEY);
+  if (!json) return null;
+
+  const data = JSON.parse(json);
+  const today = new Date().toISOString().split("T")[0];
+
+  // ✅ kalau harinya sama → pakai
+  if (data.date === today) {
+    return data;
   }
+
+  // ❌ kalau harinya beda → anggap expired
+  return null;
 };

@@ -1,7 +1,7 @@
-// app/(tabs)/_layout.js
 import { useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, TouchableOpacity } from "react-native";
 import { Tabs, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Box,
   HStack,
@@ -22,7 +22,7 @@ import {
 
 const { width, height } = Dimensions.get("window");
 
-// 🔹 Drawer Menu
+/* ===================== DRAWER MENU ===================== */
 function DrawerMenu({ visible, onClose, router }) {
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
@@ -39,20 +39,13 @@ function DrawerMenu({ visible, onClose, router }) {
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [visible, slideAnim, overlayAnim]);
+  }, [visible]);
 
   if (!visible) return null;
 
   return (
-    <Box
-      position="absolute"
-      left={0}
-      top={0}
-      right={0}
-      bottom={0}
-      zIndex={999}
-    >
-      {/* ✅ Overlay (klik luar untuk close) */}
+    <Box position="absolute" left={0} top={0} right={0} bottom={0} zIndex={999}>
+      {/* Overlay */}
       <Animated.View
         style={{
           position: "absolute",
@@ -73,7 +66,7 @@ function DrawerMenu({ visible, onClose, router }) {
         />
       </Animated.View>
 
-      {/* ✅ Drawer panel */}
+      {/* Drawer */}
       <Animated.View
         style={{
           position: "absolute",
@@ -90,103 +83,30 @@ function DrawerMenu({ visible, onClose, router }) {
           </Text>
 
           <VStack space="md">
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/jurnalwater");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Jurnal Water
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/challengewater");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Challenge Water
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/sleepzone");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Smart Sleep Zone
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/streak");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Streak Konsisten
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/moodscreen");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Daily Mood
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/targetharian");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Target Harian Dinamis
-              </Text>
-            </Pressable>
-
-            <Pressable
-              bg="#3b82f6"
-              p="$3"
-              rounded="$lg"
-              onPress={() => {
-                onClose();
-                router.push("/hydrationBadges");
-              }}
-            >
-              <Text color="white" fontWeight="$semibold">
-                Hydration Badges
-              </Text>
-            </Pressable>
+            {[
+              { label: "Jurnal Water", path: "/jurnalwater" },
+              { label: "Challenge Water", path: "/challengewater" },
+              { label: "Smart Sleep Zone", path: "/sleepzone" },
+              { label: "Streak Konsisten", path: "/streak" },
+              { label: "Daily Mood", path: "/moodscreen" },
+              { label: "Target Harian Dinamis", path: "/targetharian" },
+              { label: "Hydration Badges", path: "/hydrationBadges" },
+            ].map((item) => (
+              <Pressable
+                key={item.label}
+                bg="#3b82f6"
+                p="$3"
+                rounded="$lg"
+                onPress={() => {
+                  onClose();
+                  router.push(item.path);
+                }}
+              >
+                <Text color="white" fontWeight="$semibold">
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
 
             <Pressable bg="#444" p="$3" rounded="$lg" onPress={onClose}>
               <Text color="white" fontWeight="$semibold">
@@ -200,30 +120,54 @@ function DrawerMenu({ visible, onClose, router }) {
   );
 }
 
-// 🔹 Tombol Hamburger
+/* ===================== HEADER COMPONENT ===================== */
 function HeaderHamburger({ onPress }) {
   return (
-    <Pressable onPress={onPress} ml="$2">
+    <Pressable onPress={onPress} ml="$4">
       <AlignJustify size={24} color="black" />
     </Pressable>
   );
 }
 
-// 🔹 Header Avatar
+/* ===================== HEADER AVATAR ===================== */
 function HeaderAvatar() {
+  const [user, setUser] = useState({
+    username: "",
+    photoUrl: "",
+  });
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const saved = await AsyncStorage.getItem("personal-info");
+      if (saved) {
+        const p = JSON.parse(saved);
+        setUser({
+          username: p.username || "",
+          photoUrl: p.photoUrl || "",
+        });
+      }
+    };
+
+    loadUser();
+  }, []);
+
   return (
-    <HStack space="sm" alignItems="center" mr="$4">
-      <Text color="$gray800" fontWeight="$medium">
-        Mahasiswa
-      </Text>
-      <Avatar size="sm" bgColor="$blue500">
-        <AvatarFallbackText>K</AvatarFallbackText>
+    <HStack mr="$4">
+      <Avatar size="sm" bg="$blue500">
+        {user.photoUrl ? (
+          <Avatar.Image source={{ uri: user.photoUrl }} />
+        ) : (
+          <AvatarFallbackText>
+            {user.username?.charAt(0)?.toUpperCase()}
+          </AvatarFallbackText>
+        )}
       </Avatar>
+
     </HStack>
   );
 }
 
-// 🔹 TAB LAYOUT
+/* ===================== TAB LAYOUT ===================== */
 export default function TabsLayout() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const router = useRouter();
@@ -239,36 +183,48 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: "#3b82f6",
+          headerTitleAlign: "center",
         }}
       >
+        {/* HOME */}
         <Tabs.Screen
           name="home"
           options={{
-            headerShown: true,
             headerTitle: "Home",
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
             ),
+            headerRight: () => <Box w={40} />,
             tabBarIcon: ({ color }) => <Home color={color} />,
           }}
         />
 
+        {/* STATS */}
         <Tabs.Screen
           name="stats"
           options={{
-            headerShown: true,
-            headerTitle: "Kenali Cuaca & Rekomendasi Minum",
+            headerTitle: () => (
+              <Box alignItems="center">
+                <Text fontSize="$md" fontWeight="$semibold">
+                  Kenali Cuaca & Rekomendasi
+                </Text>
+                <Text fontSize="$sm" color="$gray600">
+                  Minum
+                </Text>
+              </Box>
+            ),
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
             ),
+            headerRight: () => <Box w={40} />,
             tabBarIcon: ({ color }) => <BarChart2 color={color} />,
           }}
         />
 
+        {/* COMMUNITY */}
         <Tabs.Screen
           name="community"
           options={{
-            headerShown: true,
             headerTitle: "Komunitas",
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
@@ -278,26 +234,28 @@ export default function TabsLayout() {
           }}
         />
 
+        {/* NEWS */}
         <Tabs.Screen
           name="news"
           options={{
-            headerShown: true,
             headerTitle: "Berita",
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
             ),
+            headerRight: () => <Box w={40} />,
             tabBarIcon: ({ color }) => <Newspaper color={color} />,
           }}
         />
 
+        {/* PROFILE */}
         <Tabs.Screen
           name="profile"
           options={{
-            headerShown: true,
-            headerTitle: "Profil",
+            headerTitle: "Account",
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
             ),
+            headerRight: () => <Box w={40} />,
             tabBarIcon: ({ color }) => <User color={color} />,
           }}
         />

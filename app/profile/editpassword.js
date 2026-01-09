@@ -1,75 +1,105 @@
 import { useState } from "react";
-import { Center, Box, Input, InputField, Button, ButtonText, Text } from "@gluestack-ui/themed";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import {
+    Box,
+    Text,
+    VStack,
+    Input,
+    InputField,
+    Button,
+    ButtonText,
+} from "@gluestack-ui/themed";
+import { auth } from "../../src/config/firebase";
+import {
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    updatePassword,
+} from "firebase/auth";
 
-export default function EditPassword({ title = "Ubah Password" }) {
+export default function ChangePassword() {
     const router = useRouter();
-    const [oldPassword, setOldPassword] = useState("");
+
+    const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleChangePassword = async () => {
-        const saved = await AsyncStorage.getItem("user");
-        if (!saved) return alert("User tidak ditemukan!");
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            alert("Lengkapi semua field");
+            return;
+        }
 
-        const user = JSON.parse(saved);
+        if (newPassword !== confirmPassword) {
+            alert("Password baru tidak sama");
+            return;
+        }
 
-        if (oldPassword !== user.password) return alert("Password lama salah!");
-        if (newPassword.length < 6) return alert("Password minimal 6 karakter!");
-        if (newPassword !== confirmPassword) return alert("Konfirmasi password tidak cocok!");
+        try {
+            setLoading(true);
 
-        const updatedUser = { ...user, password: newPassword };
-        await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
-        await AsyncStorage.removeItem("user");
+            const user = auth.currentUser;
+            if (!user || !user.email) return;
 
-        alert("Password berhasil diubah. Silakan login kembali.");
-        router.replace("/login");
+            // 🔐 Re-authentication (WAJIB)
+            const credential = EmailAuthProvider.credential(
+                user.email,
+                currentPassword
+            );
+
+            await reauthenticateWithCredential(user, credential);
+            await updatePassword(user, newPassword);
+
+            alert("Password berhasil diubah");
+            router.back();
+        } catch (e) {
+            console.log(e);
+            alert("Password lama salah atau terjadi kesalahan");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <Center flex={1} px="$6" bg="$gray100">
-            <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl">
+        <>
+            <Stack.Screen options={{ title: "Change Password" }} />
 
-                <Text fontSize="$2xl" mb="$4" fontWeight="bold">
-                    {title}
-                </Text>
+            <Box flex={1} bg="#F1F5F9" p="$5">
+                <VStack space="lg">
+                    <Input>
+                        <InputField
+                            placeholder="Current password"
+                            secureTextEntry
+                            value={currentPassword}
+                            onChangeText={setCurrentPassword}
+                        />
+                    </Input>
 
-                <Text mb="$1">Password Lama</Text>
-                <Input mb="$3">
-                    <InputField
-                        value={oldPassword}
-                        onChangeText={setOldPassword}
-                        placeholder="Password lama"
-                        secureTextEntry
-                    />
-                </Input>
+                    <Input>
+                        <InputField
+                            placeholder="New password"
+                            secureTextEntry
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                        />
+                    </Input>
 
-                <Text mb="$1">Password Baru</Text>
-                <Input mb="$3">
-                    <InputField
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                        placeholder="Password baru"
-                        secureTextEntry
-                    />
-                </Input>
+                    <Input>
+                        <InputField
+                            placeholder="Confirm new password"
+                            secureTextEntry
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                        />
+                    </Input>
 
-                <Text mb="$1">Konfirmasi Password Baru</Text>
-                <Input mb="$4">
-                    <InputField
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        placeholder="Ulangi password baru"
-                        secureTextEntry
-                    />
-                </Input>
-
-                <Button onPress={handleChangePassword}>
-                    <ButtonText>Simpan</ButtonText>
-                </Button>
-
+                    <Button onPress={handleChangePassword} isDisabled={loading}>
+                        <ButtonText>
+                            {loading ? "Saving..." : "Save Password"}
+                        </ButtonText>
+                    </Button>
+                </VStack>
             </Box>
-        </Center>
+        </>
     );
 }

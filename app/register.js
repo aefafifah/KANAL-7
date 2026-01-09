@@ -10,60 +10,15 @@ import {
   Pressable,
   InputSlot,
   Icon,
+  Image,
+  VStack,
+  HStack,
 } from "@gluestack-ui/themed";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { registerUser } from "../src/actions/authActions"; // ✅ samakan dengan file yang kamu kirim
-
-function Title({ text }) {
-  return (
-    <Text fontSize="$3xl" fontWeight="$bold" mb="$4">
-      {text}
-    </Text>
-  );
-}
-
-function InputLabel({
-  label,
-  value,
-  setValue,
-  type = "text",
-  showPassword,
-  toggleShowPassword,
-}) {
-  const isPassword = type === "password";
-
-  return (
-    <>
-      <Text mb="$1">{label}</Text>
-
-      <Input mb="$4">
-        <InputField
-          placeholder={label}
-          value={value}
-          secureTextEntry={isPassword && !showPassword}
-          keyboardType={type === "email" ? "email-address" : "default"}
-          autoCapitalize="none"
-          onChangeText={setValue}
-        />
-
-        {isPassword && (
-          <InputSlot pr="$3">
-            <Pressable onPress={toggleShowPassword}>
-              <Icon
-                as={showPassword ? Eye : EyeOff}
-                size="md"
-                color="$coolGray500"
-              />
-            </Pressable>
-          </InputSlot>
-        )}
-      </Input>
-    </>
-  );
-}
+import { registerUser } from "../src/actions/authActions";
 
 export default function Register() {
   const router = useRouter();
@@ -74,8 +29,9 @@ export default function Register() {
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const toggleShowPassword = () => setShowPassword((prev) => !prev);
+  const toggleShowPassword = () => setShowPassword(!showPassword);
 
+  // ================= LOGIKA REGISTER TIDAK DIUBAH =================
   const handleRegister = async () => {
     if (!username || !email || !password || !confirm) {
       alert("Harap isi semua form");
@@ -93,10 +49,9 @@ export default function Register() {
     }
 
     try {
-      // ✅ username permanen + displayName default sama dengan username (boleh diubah nanti)
       const profile = {
-        username: username.trim(), // permanen
-        displayName: username.trim(), // editable (default = username)
+        username: username.trim(),
+        displayName: username.trim(),
         email: email.trim(),
         status: "user",
       };
@@ -109,7 +64,6 @@ export default function Register() {
         result?.userCredential?.user?.uid ||
         null;
 
-      // ✅ session lokal (tanpa password)
       await AsyncStorage.setItem(
         "user",
         JSON.stringify({
@@ -124,64 +78,96 @@ export default function Register() {
       alert("Registrasi berhasil! Silakan login.");
       router.replace("/login");
     } catch (error) {
-      let message = "Registrasi gagal";
-
-      switch (error?.code) {
-        case "auth/email-already-in-use":
-          message = "Email telah terdaftar";
-          break;
-        case "auth/invalid-email":
-          message = "Format email tidak valid";
-          break;
-        case "auth/weak-password":
-          message = "Password minimal 6 karakter";
-          break;
-        case "auth/network-request-failed":
-          message = "Koneksi internet bermasalah";
-          break;
-        default:
-          message = "Terjadi kesalahan saat registrasi";
-      }
-
-      alert(message);
-      console.log("REGISTER ERROR:", error?.code, error?.message);
+      alert("Registrasi gagal");
+      console.log(error);
     }
   };
 
   return (
-    <Box flex={1} p="$6" justifyContent="center" bg="$white">
-      <Title text="Daftar Akun" />
+    <Box flex={1} bg="$white" px="$6" justifyContent="center">
+      <VStack space="lg" alignItems="center">
+        {/* LOGO */}
+        <Image
+          source={require("../assets/logo.png")}
+          alt="logo"
+          w={150}
+          h={150}
+          mb="$2"
+        />
 
-      <InputLabel label="Username" value={username} setValue={setUsername} />
+        {/* TITLE */}
+        <Text fontSize="$2xl" fontWeight="$bold">
+          Create Account
+        </Text>
+        <Text color="$coolGray500">
+          Fill the form to get started
+        </Text>
 
-      <InputLabel
-        label="Email"
-        value={email}
-        setValue={setEmail}
-        type="email"
-      />
+        {/* FORM */}
+        <VStack w="100%" space="md" mt="$4">
+          <Input>
+            <InputField
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+          </Input>
 
-      <InputLabel
-        label="Password"
-        value={password}
-        setValue={setPassword}
-        type="password"
-        showPassword={showPassword}
-        toggleShowPassword={toggleShowPassword}
-      />
+          <Input>
+            <InputField
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+          </Input>
 
-      <InputLabel
-        label="Konfirmasi Password"
-        value={confirm}
-        setValue={setConfirm}
-        type="password"
-        showPassword={showPassword}
-        toggleShowPassword={toggleShowPassword}
-      />
+          <Input>
+            <InputField
+              placeholder="Password"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <InputSlot pr="$3">
+              <Pressable onPress={toggleShowPassword}>
+                <Icon as={showPassword ? Eye : EyeOff} />
+              </Pressable>
+            </InputSlot>
+          </Input>
 
-      <Button onPress={handleRegister}>
-        <ButtonText>Daftar</ButtonText>
-      </Button>
+          <Input>
+            <InputField
+              placeholder="Confirm Password"
+              secureTextEntry={!showPassword}
+              value={confirm}
+              onChangeText={setConfirm}
+            />
+          </Input>
+        </VStack>
+
+        {/* BUTTON */}
+        <Button
+          w="100%"
+          mt="$4"
+          bg="$blue600"
+          borderRadius="$full"
+          onPress={handleRegister}
+        >
+          <ButtonText color="$white">Sign up</ButtonText>
+        </Button>
+
+        {/* LINK */}
+        <HStack mt="$2">
+          <Text color="$coolGray500">Already have an account? </Text>
+          <Pressable onPress={() => router.replace("/login")}>
+            <Text color="$blue600" fontWeight="$bold">
+              Sign in
+            </Text>
+          </Pressable>
+        </HStack>
+      </VStack>
     </Box>
   );
 }

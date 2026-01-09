@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Box, Text, Button, ButtonText } from "@gluestack-ui/themed";
+import { Box, Text, Button, ButtonText, HStack } from "@gluestack-ui/themed";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
-import { Droplet } from "lucide-react-native";
+import { Droplet, RotateCcw } from "lucide-react-native";
 
 const WaterCard = ({ dailyGoal, onGoalComplete }) => {
   const [currentIntake, setCurrentIntake] = useState(0);
@@ -16,15 +16,27 @@ const WaterCard = ({ dailyGoal, onGoalComplete }) => {
     setCurrentIntake(newAmount);
   };
 
-  // Cek apakah goal sudah tercapai → kirim callback ke HomeScreen
+  // 🔄 RESET
+  const resetWater = () => {
+    setCurrentIntake(0);
+  };
+
+  // 🔥 Cek apakah goal tercapai
   useEffect(() => {
     if (currentIntake >= dailyGoal && dailyGoal > 0) {
-      onGoalComplete(); // 
+      onGoalComplete?.(); // aman kalau props kosong
     }
-  }, [currentIntake]);
+  }, [currentIntake, dailyGoal]);
 
   return (
-    <Box p="$4" bg="$white" rounded="$lg" m="$2" alignItems="center" shadow="$2">
+    <Box
+      p="$4"
+      bg="$white"
+      rounded="$lg"
+      m="$2"
+      alignItems="center"
+      shadow="$2"
+    >
       <AnimatedCircularProgress
         size={220}
         width={20}
@@ -47,20 +59,34 @@ const WaterCard = ({ dailyGoal, onGoalComplete }) => {
         )}
       </AnimatedCircularProgress>
 
-      <Button
-        mt="$6"
-        size="lg"
-        bg="$blue500"
-        rounded="$full"
-        onPress={addWater}
-        isDisabled={currentIntake >= dailyGoal}
-      >
-        <ButtonText>
-          {currentIntake >= dailyGoal
-            ? "Target Tercapai!"
-            : `Minum (${drinkAmount} mL)`}
-        </ButtonText>
-      </Button>
+      {/* BUTTON AREA */}
+      <HStack mt="$6" space="md">
+        <Button
+          size="lg"
+          bg="$blue500"
+          rounded="$full"
+          onPress={addWater}
+          isDisabled={currentIntake >= dailyGoal}
+        >
+          <ButtonText>
+            {currentIntake >= dailyGoal
+              ? "Target Tercapai!"
+              : `Minum (${drinkAmount} mL)`}
+          </ButtonText>
+        </Button>
+
+        {/* 🔄 RESET BUTTON */}
+        <Button
+          size="lg"
+          variant="outline"
+          borderColor="$coolGray300"
+          rounded="$full"
+          onPress={resetWater}
+          isDisabled={currentIntake === 0}
+        >
+          <RotateCcw size={18} color="#3b82f6" />
+        </Button>
+      </HStack>
     </Box>
   );
 };

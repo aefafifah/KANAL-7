@@ -1,22 +1,43 @@
 import React, { useEffect, useState } from "react";
-import { Box, Text, ScrollView, Pressable } from "@gluestack-ui/themed";
+import {
+  Box,
+  Text,
+  ScrollView,
+  Pressable,
+  VStack,
+  HStack,
+} from "@gluestack-ui/themed";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "@gluestack-ui/themed";
 import { MaterialIcons } from "@expo/vector-icons";
 
+/* =====================
+  THEME
+===================== */
+const BG = "#EEF2FF";
+const CARD = "#FFFFFF";
+const PRIMARY = "#3B82F6";
+const MUTED = "#E5E7EB";
+
 const moods = [
-  { label: "Happy", emoji: "😄", color: "#FFD93D" },
-  { label: "Calm", emoji: "😊", color: "#6FCF97" },
-  { label: "Neutral", emoji: "😐", color: "#BDBDBD" },
-  { label: "Sad", emoji: "😢", color: "#56CCF2" },
-  { label: "Angry", emoji: "😡", color: "#EB5757" },
+  { label: "Happy", emoji: "😄", color: "#FACC15" },
+  { label: "Calm", emoji: "😊", color: "#22C55E" },
+  { label: "Neutral", emoji: "😐", color: "#9CA3AF" },
+  { label: "Sad", emoji: "😢", color: "#38BDF8" },
+  { label: "Angry", emoji: "😡", color: "#EF4444" },
+  { label: "Cry", emoji: "😭", color: "#6366F1" },
 ];
 
-export default function MoodScreen({ title = "How do you feel today?" }) {
+export default function MoodScreen({
+  title = "How do you feel today?",
+}) {
   const [selectedMood, setSelectedMood] = useState(null);
   const [history, setHistory] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
 
+  /* =====================
+    LOAD DATA
+  ===================== */
   useEffect(() => {
     loadMood();
     loadHistory();
@@ -35,10 +56,16 @@ export default function MoodScreen({ title = "How do you feel today?" }) {
     if (saved) setHistory(JSON.parse(saved));
   };
 
+  /* =====================
+    SAVE MOOD
+  ===================== */
   const saveMood = async () => {
     if (!selectedMood || isLocked) return;
 
-    await AsyncStorage.setItem("currentMood", JSON.stringify(selectedMood));
+    await AsyncStorage.setItem(
+      "currentMood",
+      JSON.stringify(selectedMood)
+    );
 
     const newEntry = {
       mood: selectedMood,
@@ -51,161 +78,251 @@ export default function MoodScreen({ title = "How do you feel today?" }) {
     const newHistory = [newEntry, ...history];
     setHistory(newHistory);
 
-    await AsyncStorage.setItem("moodHistory", JSON.stringify(newHistory));
+    await AsyncStorage.setItem(
+      "moodHistory",
+      JSON.stringify(newHistory)
+    );
 
     setIsLocked(true);
   };
 
+  /* =====================
+    EDIT & RESET
+  ===================== */
   const handleEdit = () => {
     setIsLocked(false);
     setSelectedMood(null);
   };
 
+  const resetMood = async () => {
+    await AsyncStorage.removeItem("currentMood");
+    setSelectedMood(null);
+    setIsLocked(false);
+  };
+
+  /* =====================
+    DELETE HISTORY
+  ===================== */
   const deleteHistoryItem = async (index) => {
     const updated = history.filter((_, i) => i !== index);
     setHistory(updated);
-    await AsyncStorage.setItem("moodHistory", JSON.stringify(updated));
+    await AsyncStorage.setItem(
+      "moodHistory",
+      JSON.stringify(updated)
+    );
   };
 
   return (
-    <SafeAreaView bg="#fff" flex={1}>
+    <SafeAreaView flex={1} bg={BG}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          padding: 20,
-          paddingTop: 5,
+          padding: 16,
           paddingBottom: 80,
         }}
       >
-        {/* Title */}
-        <Text fontSize={24} fontWeight="bold" mb={20}>
+        {/* =====================
+            TITLE
+        ===================== */}
+        <Text fontSize="$2xl" fontWeight="$bold" mb="$4">
           {title}
         </Text>
 
-        {/* Current Mood */}
+        {/* =====================
+            CURRENT MOOD CARD
+        ===================== */}
         <Box
-          bg="#f3f4f6"
-          borderRadius={16}
-          p={20}
+          bg={CARD}
+          rounded="$2xl"
+          p="$6"
+          shadow="$2"
+          mb="$6"
           alignItems="center"
-          mb={30}
         >
           {isLocked && selectedMood ? (
             <>
-              <Text fontSize={60}>{selectedMood.emoji}</Text>
+              <Text fontSize={64}>{selectedMood.emoji}</Text>
 
-              <Text fontSize={22} fontWeight="bold" mt={10}>
+              <Text
+                fontSize="$xl"
+                fontWeight="$bold"
+                mt="$2"
+              >
                 {selectedMood.label}
               </Text>
 
-              <Pressable
-                mt={10}
-                px={14}
-                py={8}
-                bg="#3b82f6"
-                borderRadius={12}
-                onPress={handleEdit}
-              >
-                <Text color="#fff" fontWeight="bold">
-                  Edit Mood
-                </Text>
-              </Pressable>
+              <HStack mt="$4" space="sm">
+                <Pressable
+                  px="$6"
+                  py="$2"
+                  bg={PRIMARY}
+                  rounded="$xl"
+                  onPress={handleEdit}
+                >
+                  <Text
+                    color="$white"
+                    fontWeight="$bold"
+                  >
+                    Edit
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  px="$6"
+                  py="$2"
+                  bg={MUTED}
+                  rounded="$xl"
+                  onPress={resetMood}
+                >
+                  <Text
+                    color="#111827"
+                    fontWeight="$bold"
+                  >
+                    Reset
+                  </Text>
+                </Pressable>
+              </HStack>
             </>
           ) : (
-            <Text fontSize={16} color="#666">
+            <Text color="#6B7280">
               No mood selected yet
             </Text>
           )}
         </Box>
 
-        {/* Select Mood */}
-        <Text fontSize={18} fontWeight="bold" mb={10}>
+        {/* =====================
+            PICK MOOD
+        ===================== */}
+        <Text fontSize="$lg" fontWeight="$bold" mb="$3">
           Choose Your Mood
         </Text>
 
-        <Box
-          flexDirection="row"
+        <HStack
           flexWrap="wrap"
           justifyContent="space-between"
         >
-          {moods.map((m) => (
-            <Pressable
-              key={m.label}
-              width="48%"
-              bg="#f5f5f5"
-              borderRadius={16}
-              py={20}
-              mb={15}
-              alignItems="center"
-              borderWidth={2}
-              borderColor={
-                selectedMood?.label === m.label ? m.color : "transparent"
-              }
-              disabled={isLocked}
-              opacity={isLocked ? 0.4 : 1}
-              onPress={() => setSelectedMood(m)}
-            >
-              <Text fontSize={36}>{m.emoji}</Text>
-              <Text mt={8} fontWeight="bold">
-                {m.label}
-              </Text>
-            </Pressable>
-          ))}
-        </Box>
+          {moods.map((m) => {
+            const active =
+              selectedMood?.label === m.label;
 
-        {/* Set Button */}
+            return (
+              <Pressable
+                key={m.label}
+                w="48%"
+                bg={CARD}
+                rounded="$2xl"
+                py="$5"
+                mb="$4"
+                alignItems="center"
+                borderWidth={2}
+                borderColor={
+                  active ? m.color : MUTED
+                }
+                shadow="$1"
+                opacity={isLocked ? 0.4 : 1}
+                disabled={isLocked}
+                onPress={() =>
+                  setSelectedMood(m)
+                }
+              >
+                <Text fontSize={40}>
+                  {m.emoji}
+                </Text>
+                <Text mt="$2" fontWeight="$bold">
+                  {m.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </HStack>
+
+        {/* =====================
+            SET BUTTON
+        ===================== */}
         <Pressable
-          py={16}
-          borderRadius={16}
+          mt="$2"
+          py="$4"
+          rounded="$2xl"
           alignItems="center"
-          mb={20}
           bg={
             selectedMood && !isLocked
-              ? selectedMood.color
-              : "#999"
+              ? PRIMARY
+              : "#CBD5E1"
           }
           disabled={isLocked || !selectedMood}
           onPress={saveMood}
         >
-          <Text fontSize={18} fontWeight="bold" color="#fff">
+          <Text
+            fontSize="$lg"
+            fontWeight="$bold"
+            color="$white"
+          >
             {isLocked ? "Mood Set" : "Set Mood"}
           </Text>
         </Pressable>
 
-        {/* History */}
-        <Text fontSize={18} fontWeight="bold" mb={10}>
+        {/* =====================
+            HISTORY
+        ===================== */}
+        <Text
+          fontSize="$lg"
+          fontWeight="$bold"
+          mt="$8"
+          mb="$3"
+        >
           Mood History
         </Text>
 
-        {history.map((item, index) => (
-          <Box
-            key={index}
-            bg="#f3f4f6"
-            p={16}
-            borderRadius={14}
-            mb={10}
-            flexDirection="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box flexDirection="row" alignItems="center" gap={8}>
-              <Text fontSize={30}>{item.mood.emoji}</Text>
-              <Text fontSize={16} fontWeight="bold">
-                {item.mood.label}
-              </Text>
-            </Box>
+        <VStack space="sm">
+          {history.map((item, index) => (
+            <Box
+              key={index}
+              bg={CARD}
+              p="$4"
+              rounded="$xl"
+              shadow="$1"
+            >
+              <HStack
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <HStack
+                  alignItems="center"
+                  space="sm"
+                >
+                  <Text fontSize={32}>
+                    {item.mood.emoji}
+                  </Text>
+                  <Text fontWeight="$bold">
+                    {item.mood.label}
+                  </Text>
+                </HStack>
 
-            <Box alignItems="flex-end">
-              <Text fontSize={14} color="#666">
-                {item.time}
-              </Text>
+                <VStack alignItems="flex-end">
+                  <Text
+                    fontSize="$sm"
+                    color="#6B7280"
+                  >
+                    {item.time}
+                  </Text>
 
-              <Pressable mt={4} onPress={() => deleteHistoryItem(index)}>
-                <MaterialIcons name="delete" size={18} color="#9c0707ff" />
-              </Pressable>
+                  <Pressable
+                    mt="$1"
+                    onPress={() =>
+                      deleteHistoryItem(index)
+                    }
+                  >
+                    <MaterialIcons
+                      name="delete"
+                      size={18}
+                      color="#DC2626"
+                    />
+                  </Pressable>
+                </VStack>
+              </HStack>
             </Box>
-          </Box>
-        ))}
+          ))}
+        </VStack>
       </ScrollView>
     </SafeAreaView>
   );

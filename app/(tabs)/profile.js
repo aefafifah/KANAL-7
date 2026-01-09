@@ -1,117 +1,191 @@
 import { useCallback, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Center, Box, Button, ButtonText, Text, HStack } from "@gluestack-ui/themed";
-import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { useRouter, Stack } from "expo-router";
+import {
+  Box,
+  Text,
+  VStack,
+  HStack,
+  Pressable,
+  ScrollView,
+  Avatar,
+  AvatarFallbackText,
+  AvatarImage,
+} from "@gluestack-ui/themed";
+import {
+  User,
+  Settings,
+  Shield,
+  LogOut,
+  Star,
+  ChevronRight,
+} from "lucide-react-native";
 
-// Firebase
-import { signOut } from "firebase/auth";
 import { get, ref as dbRef } from "firebase/database";
 import { auth, db } from "../../src/config/firebase";
 
-export default function ProfileTab({ title = "Profile" }) {
+export default function Profile() {
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [user, setUser] = useState({
+    username: "",
+    email: "",
+    photoUrl: "",
+  });
+
+  const [streakLevel, setStreakLevel] = useState(1);
 
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
-        try {
-          const uid = auth.currentUser?.uid;
+        const saved = await AsyncStorage.getItem("personal-info");
 
-          // 1) cepat dari session/cache
-          const local = await AsyncStorage.getItem("user");
-          if (local) {
-            const u = JSON.parse(local);
-            setUsername(u.username || u.nama || "");
-            setDisplayName(u.displayName || u.nama || u.username || "");
-          }
-
-          // 2) sumber utama: RTDB (ambil displayName terbaru)
-          if (uid) {
-            const snap = await get(dbRef(db, `users/${uid}`));
-            if (snap.exists()) {
-              const p = snap.val();
-
-              const usernameDB = (p?.username || p?.nama || "").trim();
-              const displayNameDB = (p?.displayName || "").trim();
-              const displayNameFinal = displayNameDB || usernameDB;
-
-              setUsername(usernameDB);
-              setDisplayName(displayNameFinal);
-
-              // sinkronkan session (tanpa password)
-              await AsyncStorage.setItem(
-                "user",
-                JSON.stringify({
-                  uid,
-                  username: usernameDB,
-                  displayName: displayNameFinal,
-                  email: auth.currentUser?.email || p?.email || "",
-                  status: p?.status || "user",
-                })
-              );
-            }
-          }
-        } catch (e) {
-          console.log("PROFILE TAB LOAD ERROR:", e);
+        if (saved) {
+          const p = JSON.parse(saved);
+          setUser({
+            username: p.username || "",
+            email: p.email || "",
+            photoUrl: p.photoUrl || "",
+          });
         }
+
+        const streak = await AsyncStorage.getItem("streak-level");
+        setStreakLevel(streak ? parseInt(streak) : 1);
       };
 
       load();
     }, [])
   );
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      await AsyncStorage.removeItem("user");
-      await AsyncStorage.removeItem("profilePhoto"); // foto lokal hilang setelah logout
-      router.replace("/login");
-    } catch (e) {
-      alert("Logout gagal");
-    }
+
+
+  const logout = async () => {
+    await AsyncStorage.clear();
+    await auth.signOut();
+    router.replace("/login");
   };
 
   return (
-    <Center flex={1} px="$6" bg="$gray100">
-      <Box w="100%" maxWidth={350} p="$6" bg="$white" rounded="$xl" shadow="$2">
-        <Text fontSize="$xl" color="$gray600" mb="$2">
-          {title}
-        </Text>
+    <>
+      <Stack.Screen options={{ title: "Profile" }} />
 
-        {/* Utama: displayName */}
-        <Text fontSize="$2xl" fontWeight="bold">
-          {displayName || "-"}
-        </Text>
+      <ScrollView bg="#EEF2FF">
+        <VStack space="lg" p="$4">
 
-        {/* Secondary: @username */}
-        <Text mt="$1" mb="$4" color="$gray500">
-          {username ? `@${username}` : ""}
-        </Text>
+          {/* ===== HEADER CENTER ===== */}
+          <VStack alignItems="center" space="sm" mt="$4">
+            <Avatar size="2xl" bg="#3B82F6">
+              {user.photoUrl ? (
+                <AvatarImage source={{ uri: user.photoUrl }} />
+              ) : (
+                <AvatarFallbackText>
+                  {user.username?.charAt(0)?.toUpperCase()}
+                </AvatarFallbackText>
+              )}
+            </Avatar>
 
-        <Button mb="$3" onPress={() => router.push("/profile")}>
-          <ButtonText>Lihat Profile</ButtonText>
-        </Button>
+            <Text fontSize="$xl" fontWeight="$bold" color="#111827">
+              @{user.username}
+            </Text>
 
-        <Button mb="$3" onPress={() => router.push("/profile/editpassword")}>
-          <ButtonText>Ubah Password</ButtonText>
-        </Button>
+            <Text fontSize="$sm" color="#6B7280">
+              {user.email}
+            </Text>
+          </VStack>
 
-        <Button mb="$3" onPress={() => router.push("/profile/language")}>
-          <ButtonText>Pilih Bahasa</ButtonText>
-        </Button>
+          {/* ===== LEVEL CARD ===== */}
+          <Pressable onPress={() => router.push("/streak")}>
+            <Box
+              bg="#2563EB"
+              rounded="$2xl"
+              p="$5"
+              shadow="$2"
+            >
+              <HStack justifyContent="space-between" alignItems="center">
+                <HStack space="md" alignItems="center">
+                  <Box bg="#1E40AF" p="$3" rounded="$full">
+                    <Star size={22} color="#FFFFFF" />
+                  </Box>
 
-        <Button mb="$3" onPress={() => router.push("/profile/theme")}>
-          <ButtonText>Pilih Tema</ButtonText>
-        </Button>
+                  <VStack>
+                    <Text color="#FFFFFF" fontSize="$lg" fontWeight="$bold">
+                      Level {streakLevel}
+                    </Text>
+                    <Text color="#DBEAFE" fontSize="$sm">
+                      Konsisten {streakLevel} hari
+                    </Text>
+                  </VStack>
+                </HStack>
 
-        <Button bg="$red600" mt="$4" onPress={handleLogout}>
-          <ButtonText color="$white">Logout</ButtonText>
-        </Button>
+                <ChevronRight size={20} color="#FFFFFF" />
+              </HStack>
+            </Box>
+          </Pressable>
+
+          {/* ===== MENU ===== */}
+          <MenuCard
+            title="Personal Info"
+            subtitle="Profil, foto, gender"
+            icon={User}
+            onPress={() => router.push("/profile/personalinfo")}
+          />
+
+          <MenuCard
+            title="Preferences"
+            subtitle="Reminder & tampilan"
+            icon={Settings}
+            onPress={() => router.push("/profile/preference")}
+          />
+
+          <MenuCard
+            title="Logout"
+            subtitle="Keluar dari akun"
+            danger
+            icon={LogOut}
+            onPress={logout}
+          />
+        </VStack>
+      </ScrollView>
+    </>
+  );
+}
+
+/* ===== MENU CARD ===== */
+function MenuCard({ title, subtitle, icon: Icon, onPress, danger }) {
+  return (
+    <Pressable onPress={onPress}>
+      <Box bg="#FFFFFF" rounded="$2xl" p="$5" shadow="$1">
+        <HStack justifyContent="space-between" alignItems="center">
+          <HStack space="md" alignItems="center">
+            <Box
+              bg={danger ? "#FEE2E2" : "#DBEAFE"}
+              p="$3"
+              rounded="$full"
+            >
+              <Icon
+                size={22}
+                color={danger ? "#DC2626" : "#2563EB"}
+              />
+            </Box>
+
+            <VStack>
+              <Text
+                fontSize="$lg"
+                fontWeight="$bold"
+                color={danger ? "#DC2626" : "#111827"}
+              >
+                {title}
+              </Text>
+              <Text fontSize="$sm" color="#6B7280">
+                {subtitle}
+              </Text>
+            </VStack>
+          </HStack>
+
+          <ChevronRight size={20} color="#9CA3AF" />
+        </HStack>
       </Box>
-    </Center>
+    </Pressable>
   );
 }

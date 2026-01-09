@@ -33,6 +33,8 @@ import {
 dayjs.locale("id");
 const screenWidth = Dimensions.get("window").width;
 
+/* ===================== DATA ===================== */
+
 const daerahJatim = [
   "Surabaya", "Malang", "Batu", "Kediri", "Blitar", "Madiun",
   "Mojokerto", "Pasuruan", "Probolinggo", "Lumajang", "Jember",
@@ -47,10 +49,11 @@ const daerahJatim = [
 const generateDataDaerah = () => {
   const data = {};
   daerahJatim.forEach((nama) => {
-    data[nama] = Array.from({ length: 5 }, (_, i) => {
+    data[nama] = Array.from({ length: 7 }, (_, i) => {
       const suhu = Math.floor(Math.random() * 10) + 25;
       const rekomLiter = (2 + (suhu - 25) * 0.1).toFixed(1);
-      const hari = ["Sen", "Sel", "Rab", "Kam", "Jum"][i];
+      // const hari = ["Sen", "Sel", "Rab", "Kam", "Jum"][i];
+      const hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"][i];
       return { hari, suhu, rekomLiter: parseFloat(rekomLiter) };
     });
   });
@@ -59,7 +62,6 @@ const generateDataDaerah = () => {
 
 const dataPerDaerah = generateDataDaerah();
 
-// 🌤️ Data rekomendasi per jam
 const dataPerJam = {
   pagi: { suhu: 28, rekom: "0.5L air sebelum aktivitas", icon: Coffee },
   siang: { suhu: 34, rekom: "1L air, hindari terik matahari", icon: Sun },
@@ -67,13 +69,71 @@ const dataPerJam = {
   malam: { suhu: 26, rekom: "0.4L air hangat sebelum tidur", icon: Moon },
 };
 
-const InfoHari = ({ hari, suhu, rekomLiter }) => (
-  <VStack alignItems="center" p={3} bg="$blue50" borderRadius={12} m={1} width={70} shadow={1}>
-    <Text bold color="$blue800">{hari}</Text>
-    <Text color="$blue700">{suhu}°C</Text>
-    <Text fontSize={10}>{rekomLiter}L</Text>
-  </VStack>
-);
+const InfoHari = ({ hari, suhu, rekomLiter, index }) => {
+  const isHot = suhu >= 30;
+  const label =
+    index === 0
+      ? "Hari ini"
+      : index === 1
+        ? "Besok"
+        : "Perkiraan";
+
+  return (
+    <HStack
+      bg="$white"
+      rounded="$2xl"
+      p="$4"
+      mb="$3"
+      alignItems="center"
+      justifyContent="space-between"
+      shadow="$1"
+      borderLeftWidth={5}
+      borderLeftColor={isHot ? "#EF4444" : "#2563EB"}
+    >
+      {/* LEFT */}
+      <VStack>
+        <Text fontWeight="$bold" fontSize="$md" color="$blue900">
+          {hari}
+        </Text>
+        <Text fontSize="$xs" color="$gray500">
+          {label}
+        </Text>
+      </VStack>
+
+      {/* RIGHT */}
+      <HStack space="md" alignItems="center">
+        {/* SUHU */}
+        <Box
+          bg={isHot ? "#FEE2E2" : "#DBEAFE"}
+          px="$3"
+          py="$1"
+          rounded="$full"
+        >
+          <Text
+            fontWeight="$semibold"
+            color={isHot ? "#B91C1C" : "#1D4ED8"}
+          >
+            {suhu}°C
+          </Text>
+        </Box>
+
+        {/* AIR */}
+        <Box
+          bg="#EFF6FF"
+          px="$3"
+          py="$1"
+          rounded="$full"
+        >
+          <Text fontWeight="$semibold" color="#2563EB">
+            {rekomLiter} L
+          </Text>
+        </Box>
+      </HStack>
+    </HStack>
+  );
+};
+
+
 
 const ChartSuhuAir = ({ data, daerah }) => {
   const chartData = {
@@ -94,13 +154,14 @@ const ChartSuhuAir = ({ data, daerah }) => {
   };
 
   return (
-    <Center mt={4}>
-      <Heading size="sm" mb={2}>
-        Grafik Suhu & Rekomendasi Air ({daerah})
+    <Box bg="$white" rounded="$2xl" p="$4" shadow="$1" mx="$3" mt="$4">
+      <Heading size="sm" mb="$2">
+        Grafik Suhu & Rekomendasi ({daerah})
       </Heading>
+
       <LineChart
         data={chartData}
-        width={screenWidth - 20}
+        width={screenWidth - 64}
         height={250}
         chartConfig={{
           backgroundColor: "#e0f2fe",
@@ -111,26 +172,27 @@ const ChartSuhuAir = ({ data, daerah }) => {
           labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
         }}
         bezier
-        style={{
-          borderRadius: 16,
-          marginVertical: 8,
-        }}
+        style={{ borderRadius: 16 }}
       />
-    </Center>
+    </Box>
   );
 };
+
+/* ===================== SCREEN ===================== */
 
 const Stats = () => {
   const [selectedDaerah, setSelectedDaerah] = useState("Surabaya");
   const [reminder, setReminder] = useState({ icon: null, text: "" });
   const [waktuSekarang, setWaktuSekarang] = useState(null);
-  const data = dataPerDaerah[selectedDaerah];
-  const avgTemp = data.reduce((sum, item) => sum + item.suhu, 0) / data.length || 0;
 
-  // 🔥 Reminder otomatis
+  const data = dataPerDaerah[selectedDaerah];
+  const avgTemp =
+    data.reduce((sum, item) => sum + item.suhu, 0) / data.length || 0;
+
   useEffect(() => {
     let pesan = "";
     let icon = null;
+
     if (avgTemp > 33) {
       pesan = "Hari ini panas, disarankan minum minimal 2.5 liter air.";
       icon = Flame;
@@ -141,10 +203,10 @@ const Stats = () => {
       pesan = "Cuaca sejuk, tetap minum setidaknya 1.8 liter air.";
       icon = Snowflake;
     }
+
     setReminder({ icon, text: pesan });
   }, [selectedDaerah]);
 
-  // 🕒 Deteksi waktu otomatis
   useEffect(() => {
     const jam = new Date().getHours();
     let waktu = "pagi";
@@ -157,75 +219,94 @@ const Stats = () => {
   const ReminderBox = () => {
     const Icon = reminder.icon;
     return (
-      <Box mt={3} bg="$blue50" p={3} borderRadius={12} flexDirection="row" alignItems="center">
-        {Icon && <Icon size={20} color="#2563eb" style={{ marginRight: 8 }} />}
-        <Text color="$blue700" flexShrink={1}>
-          {reminder.text}
-        </Text>
-      </Box>
+      <HStack
+        bg="#DBEAFE"
+        p="$3"
+        rounded="$xl"
+        alignItems="center"
+        space="sm"
+        mt="$3"
+      >
+        {Icon && <Icon size={20} color="#2563EB" />}
+        <Text flexShrink={1}>{reminder.text}</Text>
+      </HStack>
     );
   };
 
   return (
-    <ScrollView>
-      <Center p={4} bg="$blue100" borderBottomRadius={20}>
-        <Heading color="$blue900" mb={2}>Statistika Cuaca Jawa Timur</Heading>
-        <Text color="$blue800">{dayjs().format("dddd, DD MMMM YYYY")}</Text>
-        <ReminderBox />
-      </Center>
+    <ScrollView style={{ backgroundColor: "#EEF2FF" }}>
+      <VStack space="lg" py="$4">
 
-      {/* Dropdown Pilihan Daerah */}
-      <Center mt={4}>
-        <Text mb={2} color="$blue700" bold>Pilih Daerah</Text>
-        <Select selectedValue={selectedDaerah} onValueChange={(value) => setSelectedDaerah(value)}>
-          <SelectTrigger variant="outline" width={250}>
-            <SelectInput placeholder="Pilih daerah" />
-          </SelectTrigger>
-          <SelectPortal>
-            <SelectBackdrop />
-            <SelectContent>
-              <SelectDragIndicatorWrapper>
-                <SelectDragIndicator />
-              </SelectDragIndicatorWrapper>
-              {daerahJatim.map((daerah) => (
-                <SelectItem key={daerah} label={daerah} value={daerah} />
-              ))}
-            </SelectContent>
-          </SelectPortal>
-        </Select>
-      </Center>
+        {/* HEADER */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+          <Heading color="$blue900">
+            Statistika Cuaca Jawa Timur
+          </Heading>
+          <Text color="$blue800">
+            {dayjs().format("dddd, DD MMMM YYYY")}
+          </Text>
+          <ReminderBox />
+        </Box>
 
-      {/* Info rata-rata suhu */}
-      <Center mt={3}>
-        <Text color="$blue800">
-          Suhu rata-rata di <Text bold>{selectedDaerah}</Text>:{" "}
-          <Text bold>{avgTemp.toFixed(1)}°C</Text>
-        </Text>
-      </Center>
+        {/* SELECT */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+          <Text bold mb="$2">Pilih Daerah</Text>
+          <Select
+            selectedValue={selectedDaerah}
+            onValueChange={(value) => setSelectedDaerah(value)}
+          >
+            <SelectTrigger variant="outline">
+              <SelectInput placeholder="Pilih daerah" />
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                {daerahJatim.map((daerah) => (
+                  <SelectItem key={daerah} label={daerah} value={daerah} />
+                ))}
+              </SelectContent>
+            </SelectPortal>
+          </Select>
 
-      {/* Info per hari */}
-      <HStack justifyContent="center" flexWrap="wrap" my={4}>
-        {data.map((item) => (
-          <InfoHari key={item.hari} {...item} />
-        ))}
-      </HStack>
+          <Text mt="$3" color="$blue800">
+            Suhu rata-rata: <Text bold>{avgTemp.toFixed(1)}°C</Text>
+          </Text>
+        </Box>
 
-      <ChartSuhuAir data={data} daerah={selectedDaerah} />
-
-      {/* Rekomendasi otomatis per jam */}
-      {waktuSekarang && (
-        <Center mt={6} mb={10}>
-          <Heading size="sm" mb={2}>Rekomendasi Sekarang 🕒</Heading>
-          <VStack alignItems="center" bg="$blue50" p={4} borderRadius={16} width={200} shadow={1}>
-            <waktuSekarang.icon size={26} color="#2563eb" />
-            <Text bold color="$blue800" mt={2}>{dayjs().format("HH:mm")} WIB</Text>
-            <Text color="$blue700" mt={1}>Suhu: {waktuSekarang.suhu}°C</Text>
-            <Text fontSize={12} textAlign="center" color="$blue600" mt={1}>
-              {waktuSekarang.rekom}
-            </Text>
+        {/* INFO HARIAN */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+          <Text bold mb="$3">Perkiraan Harian</Text>
+          <VStack>
+            {data.map((item) => (
+              <InfoHari key={item.hari} {...item} />
+            ))}
           </VStack>
-        </Center>
-      )}
+
+        </Box>
+
+        {/* CHART */}
+        <ChartSuhuAir data={data} daerah={selectedDaerah} />
+
+        {/* REKOMENDASI */}
+        {waktuSekarang && (
+          <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3" mb="$10">
+            <Heading size="sm" mb="$2">
+              Rekomendasi Sekarang 🕒
+            </Heading>
+            <VStack alignItems="center">
+              <waktuSekarang.icon size={26} color="#2563EB" />
+              <Text bold mt="$2">{dayjs().format("HH:mm")} WIB</Text>
+              <Text>Suhu: {waktuSekarang.suhu}°C</Text>
+              <Text fontSize={12} textAlign="center">
+                {waktuSekarang.rekom}
+              </Text>
+            </VStack>
+          </Box>
+        )}
+      </VStack>
     </ScrollView>
   );
 };

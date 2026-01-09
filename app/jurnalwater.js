@@ -8,15 +8,8 @@ import {
   VStack,
   HStack,
   Button,
+  ButtonText,
   Icon,
-  Input,
-  InputField,
-  Modal,
-  ModalBackdrop,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Card,
 } from "@gluestack-ui/themed";
 import {
@@ -31,14 +24,21 @@ import { PieChart } from "react-native-chart-kit";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-// helper 
+// ===== THEME (SINKRON HOME & PROFILE) =====
+const PRIMARY = "#2563EB";
+const BG = "#F1F5F9";
+const CARD = "#FFFFFF";
+const TEXT = "#0F172A";
+const SUB = "#64748B";
+
+// ===== HELPER =====
 const levelToCategory = (level) =>
   level === "Rendah" ? "healthy" : level === "Sedang" ? "ok" : "low";
 
 const categoryColor = (cat) =>
   cat === "healthy" ? "#86efac" : cat === "ok" ? "#fde68a" : "#fca5a5";
 
-// props
+// ===== CUP CARD =====
 const CupCard = ({ size, selected, onPress, onLongPress }) => (
   <Pressable
     onPress={onPress}
@@ -47,23 +47,31 @@ const CupCard = ({ size, selected, onPress, onLongPress }) => (
       width: 80,
       height: 80,
       margin: 6,
-      borderRadius: 12,
+      borderRadius: 14,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: selected ? "#e0f2fe" : "#f8fafc",
+      backgroundColor: selected ? "#DBEAFE" : CARD,
       borderWidth: 1,
-      borderColor: selected ? "#2563eb" : "#e2e8f0",
-      transform: [{ scale: pressed ? 0.97 : 1 }],
+      borderColor: selected ? PRIMARY : "#E5E7EB",
+      transform: [{ scale: pressed ? 0.96 : 1 }],
     })}
   >
-    <Icon as={CupSoda} size="lg" color={selected ? "#2563eb" : "#64748b"} />
-    <Text mt="$1" fontSize="$xs" color={selected ? "$blue600" : "$muted"}>
+    <Icon as={CupSoda} size="lg" color={selected ? PRIMARY : SUB} />
+    <Text mt="$1" fontSize="$xs" color={selected ? PRIMARY : SUB}>
       {size} mL
     </Text>
   </Pressable>
 );
 
-const DrinkCard = ({ name, icon: IconComp, sugarLevel, selected, onPress, onLongPress }) => (
+// ===== DRINK CARD =====
+const DrinkCard = ({
+  name,
+  icon: IconComp,
+  sugarLevel,
+  selected,
+  onPress,
+  onLongPress,
+}) => (
   <Pressable
     onPress={onPress}
     onLongPress={onLongPress}
@@ -71,20 +79,20 @@ const DrinkCard = ({ name, icon: IconComp, sugarLevel, selected, onPress, onLong
       width: 100,
       height: 90,
       margin: 6,
-      borderRadius: 12,
+      borderRadius: 14,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: selected ? "#f0fdf4" : "#f8fafc",
+      backgroundColor: selected ? "#DBEAFE" : CARD,
       borderWidth: 1,
-      borderColor: selected ? "#16a34a" : "#e2e8f0",
-      transform: [{ scale: pressed ? 0.97 : 1 }],
+      borderColor: selected ? PRIMARY : "#E5E7EB",
+      transform: [{ scale: pressed ? 0.96 : 1 }],
     })}
   >
-    <Icon as={IconComp} size="lg" color={selected ? "#16a34a" : "#64748b"} />
-    <Text mt="$1" fontSize="$xs" color={selected ? "$green600" : "$muted"}>
+    <Icon as={IconComp} size="lg" color={selected ? PRIMARY : SUB} />
+    <Text mt="$1" fontSize="$xs" color={TEXT}>
       {name}
     </Text>
-    <Text size="2xs" color="$muted">
+    <Text fontSize="$2xs" color={SUB}>
       Gula: {sugarLevel}
     </Text>
   </Pressable>
@@ -93,7 +101,6 @@ const DrinkCard = ({ name, icon: IconComp, sugarLevel, selected, onPress, onLong
 export default function JurnalWater() {
   const [selectedCup, setSelectedCup] = useState(null);
   const [selectedDrink, setSelectedDrink] = useState(null);
-
   const [history, setHistory] = useState([]);
 
   const [cups, setCups] = useState([
@@ -109,216 +116,147 @@ export default function JurnalWater() {
     { id: 3, name: "Coffee", icon: Coffee, sugarLevel: "Tinggi" },
   ]);
 
-  // modal
   const [showAddCup, setShowAddCup] = useState(false);
   const [showAddDrink, setShowAddDrink] = useState(false);
   const [newCupSize, setNewCupSize] = useState("");
   const [newDrinkName, setNewDrinkName] = useState("");
   const [newDrinkSugar, setNewDrinkSugar] = useState("Sedang");
 
-  // record
   const handleAddRecord = () => {
     if (!selectedCup || !selectedDrink) {
-      Alert.alert("Isi pilihan", "Pilih ukuran cup & jenis minuman terlebih dahulu.");
+      Alert.alert("Lengkapi Pilihan", "Pilih ukuran cup dan jenis minuman.");
       return;
     }
 
     const now = new Date();
-    const record = {
-      id: Date.now(),
-      drinkName: selectedDrink.name,
-      size: selectedCup.size,
-      sugarLevel: selectedDrink.sugarLevel,
-      date: now.toLocaleDateString(),
-      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
+    setHistory((p) => [
+      {
+        id: Date.now(),
+        drinkName: selectedDrink.name,
+        size: selectedCup.size,
+        sugarLevel: selectedDrink.sugarLevel,
+        date: now.toLocaleDateString(),
+        time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+      ...p,
+    ]);
 
-    setHistory((prev) => [record, ...prev]);
     setSelectedCup(null);
     setSelectedDrink(null);
   };
 
-  const handleDeleteRecord = (id) => {
-    Alert.alert("Hapus Riwayat", "Yakin ingin menghapus catatan ini?", [
-      { text: "Batal", style: "cancel" },
-      { text: "Hapus", style: "destructive", onPress: () => setHistory((p) => p.filter((h) => h.id !== id)) },
-    ]);
-  };
-
-  // create,delete
-  const handleAddCup = () => {
-    const sizeNum = parseInt(newCupSize);
-    if (!sizeNum) return Alert.alert("Ukuran tidak valid");
-    setCups((p) => [...p, { id: Date.now(), size: sizeNum }]);
-    setNewCupSize("");
-    setShowAddCup(false);
-  };
-
-  const handleDeleteCup = (id) => {
-    Alert.alert("Hapus Cup", "Hapus ukuran cup ini?", [
-      { text: "Batal", style: "cancel" },
-      { text: "Hapus", style: "destructive", onPress: () => setCups((p) => p.filter((c) => c.id !== id)) },
-    ]);
-  };
-
-  const handleAddDrink = () => {
-    if (!newDrinkName.trim()) return Alert.alert("Nama minuman kosong");
-    setDrinks((p) => [...p, { id: Date.now(), name: newDrinkName, icon: GlassWater, sugarLevel: newDrinkSugar }]);
-    setNewDrinkName("");
-    setNewDrinkSugar("Sedang");
-    setShowAddDrink(false);
-  };
-
-  const handleDeleteDrink = (id) => {
-    Alert.alert("Hapus Minuman", "Hapus jenis minuman ini?", [
-      { text: "Batal", style: "cancel" },
-      { text: "Hapus", style: "destructive", onPress: () => setDrinks((p) => p.filter((d) => d.id !== id)) },
-    ]);
-  };
-
-//  chart 
   const summary = useMemo(() => {
     const count = { healthy: 0, ok: 0, low: 0 };
     history.forEach((h) => {
-      const cat = levelToCategory(h.sugarLevel);
-      count[cat] += h.size;
+      count[levelToCategory(h.sugarLevel)] += h.size;
     });
     return count;
   }, [history]);
 
   const pieData = [
-    { name: "Sehat", volume: summary.healthy, color: categoryColor("healthy"), legendFontColor: "#374151", legendFontSize: 12 },
-    { name: "Cukup", volume: summary.ok, color: categoryColor("ok"), legendFontColor: "#374151", legendFontSize: 12 },
-    { name: "Kurang", volume: summary.low, color: categoryColor("low"), legendFontColor: "#374151", legendFontSize: 12 },
+    { name: "Sehat", volume: summary.healthy, color: "#86efac", legendFontColor: TEXT, legendFontSize: 12 },
+    { name: "Cukup", volume: summary.ok, color: "#fde68a", legendFontColor: TEXT, legendFontSize: 12 },
+    { name: "Kurang", volume: summary.low, color: "#fca5a5", legendFontColor: TEXT, legendFontSize: 12 },
   ];
 
   return (
-    <ScrollView style={{ backgroundColor: "#f9fafb" }}>
-      <Center py="$6" px="$4">
-        <Heading size="lg">Jurnal Air Harian 💧</Heading>
+    <ScrollView style={{ backgroundColor: BG }}>
+      <Center px="$4" py="$6">
 
-        {}
-        <Box w="100%" bg="$white" p="$3" borderRadius="$lg" shadow="1" mb="$4">
-          <Text bold mb="$2">Grafik Kesehatan Minuman</Text>
+        <Heading color={TEXT} mb="$4">
+          Jurnal Air Harian 💧
+        </Heading>
+
+        {/* ===== CHART ===== */}
+        <Box bg={CARD} rounded="$xl" p="$4" mb="$5" w="100%">
+          <Text fontWeight="$bold" color={TEXT} mb="$2">
+            Ringkasan Minum
+          </Text>
           <PieChart
             data={pieData}
-            width={SCREEN_WIDTH - 40}
+            width={SCREEN_WIDTH - 48}
             height={220}
             accessor="volume"
             backgroundColor="transparent"
-            chartConfig={{
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`
-            }}
+            chartConfig={{ color: () => TEXT }}
           />
         </Box>
 
-        {}
-        <Box w="100%" bg="$white" p="$3" borderRadius="$lg" shadow="1" mb="$4">
-          <Text bold mb="$2">Pilih Ukuran Cup</Text>
+        {/* ===== CUP ===== */}
+        <Box bg={CARD} rounded="$xl" p="$4" mb="$5" w="100%">
+          <Text fontWeight="$bold" color={TEXT} mb="$2">
+            Pilih Ukuran Cup
+          </Text>
           <HStack flexWrap="wrap">
-            {cups.map((cup) => (
+            {cups.map((c) => (
               <CupCard
-                key={cup.id}
-                size={cup.size}
-                selected={selectedCup?.id === cup.id}
-                onPress={() => setSelectedCup(cup)}
-                onLongPress={() => handleDeleteCup(cup.id)}
+                key={c.id}
+                size={c.size}
+                selected={selectedCup?.id === c.id}
+                onPress={() => setSelectedCup(c)}
               />
             ))}
-
-            {}
-            <Pressable
-              onPress={() => setShowAddCup(true)}
-              style={{
-                width: 80,
-                height: 80,
-                margin: 6,
-                borderRadius: 12,
-                backgroundColor: "#f0f9ff",
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: "#dbeafe",
-              }}
-            >
-              <Icon as={Plus} size="lg" color="#0366d6" />
-              <Text mt="$1" fontSize="$xs" color="$blue600">Tambah</Text>
-            </Pressable>
           </HStack>
         </Box>
 
-        {}
-        <Box w="100%" bg="$white" p="$3" borderRadius="$lg" shadow="1" mb="$4">
-          <Text bold mb="$2">Pilih Jenis Minuman</Text>
+        {/* ===== DRINK ===== */}
+        <Box bg={CARD} rounded="$xl" p="$4" mb="$5" w="100%">
+          <Text fontWeight="$bold" color={TEXT} mb="$2">
+            Pilih Jenis Minuman
+          </Text>
           <HStack flexWrap="wrap">
             {drinks.map((d) => (
               <DrinkCard
                 key={d.id}
-                name={d.name}
-                icon={d.icon}
-                sugarLevel={d.sugarLevel}
+                {...d}
                 selected={selectedDrink?.id === d.id}
                 onPress={() => setSelectedDrink(d)}
-                onLongPress={() => handleDeleteDrink(d.id)}
               />
             ))}
-
-            {}
-            <Pressable
-              onPress={() => setShowAddDrink(true)}
-              style={{
-                width: 100,
-                height: 90,
-                margin: 6,
-                borderRadius: 12,
-                backgroundColor: "#f0fff4",
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: "#bbf7d0",
-              }}
-            >
-              <Icon as={Plus} size="lg" color="#16a34a" />
-              <Text mt="$1" fontSize="$xs" color="$green600">Tambah</Text>
-              <Text size="2xs" color="$muted">Level gula</Text>
-            </Pressable>
           </HStack>
         </Box>
 
-        {}
-        <Button onPress={handleAddRecord} bgColor="$blue600" w="100%" mb="$4" rounded="$xl">
-          <HStack alignItems="center" justifyContent="center" space="sm">
+        {/* ===== BUTTON ===== */}
+        <Button
+          bg={PRIMARY}
+          h={56}
+          rounded="$xl"
+          w="100%"
+          onPress={handleAddRecord}
+        >
+          <HStack alignItems="center" space="sm">
             <Icon as={Plus} color="white" />
-            <Text color="white" bold>Tambah Riwayat Minum</Text>
+            <ButtonText color="$white" fontWeight="$bold">
+              Tambah Riwayat Minum
+            </ButtonText>
           </HStack>
         </Button>
 
-        {}
-        <Box w="100%" bg="$white" p="$3" borderRadius="$lg" shadow="1" mb="$8">
-          <Text bold mb="$2">Riwayat Minum</Text>
+        {/* ===== HISTORY ===== */}
+        <Box bg={CARD} rounded="$xl" p="$4" mt="$6" w="100%">
+          <Text fontWeight="$bold" color={TEXT} mb="$2">
+            Riwayat Minum
+          </Text>
 
           {history.length === 0 ? (
-            <Text color="$muted" textAlign="center" py="$6">
+            <Text color={SUB} textAlign="center" py="$6">
               Belum ada riwayat
             </Text>
           ) : (
             <VStack space="sm">
               {history.map((h) => (
-                <Card key={h.id} p="$3" borderRadius="$lg">
+                <Card key={h.id} p="$3" rounded="$lg">
                   <HStack justifyContent="space-between" alignItems="center">
-                    <HStack alignItems="center">
-                      <Icon as={CupSoda} size="lg" color="#0366d6" mr="$3" />
-                      <VStack>
-                        <Text bold>{h.drinkName}</Text>
-                        <Text size="xs" color="$muted">
-                          {h.size} mL — {h.date} {h.time}
-                        </Text>
-                        <Text size="2xs" color="$muted">Gula: {h.sugarLevel}</Text>
-                      </VStack>
-                    </HStack>
-
-                    <Pressable onPress={() => handleDeleteRecord(h.id)}>
-                      <Icon as={Trash2} size="md" color="#dc2626" />
+                    <VStack>
+                      <Text fontWeight="$bold">{h.drinkName}</Text>
+                      <Text fontSize="$xs" color={SUB}>
+                        {h.size} mL • {h.time}
+                      </Text>
+                    </VStack>
+                    <Pressable onPress={() =>
+                      setHistory((p) => p.filter((x) => x.id !== h.id))
+                    }>
+                      <Icon as={Trash2} color="#DC2626" />
                     </Pressable>
                   </HStack>
                 </Card>
@@ -327,99 +265,6 @@ export default function JurnalWater() {
           )}
         </Box>
       </Center>
-
-      {}
-      <Modal isOpen={showAddCup} onClose={() => setShowAddCup(false)}>
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader><Heading>Tambah Ukuran Cup</Heading></ModalHeader>
-          <ModalBody>
-            <Input>
-              <InputField
-                keyboardType="numeric"
-                placeholder="250"
-                value={newCupSize}
-                onChangeText={setNewCupSize}
-              />
-            </Input>
-          </ModalBody>
-          <ModalFooter>
-            <Button mr="$3" onPress={() => setShowAddCup(false)}>
-              <Text>Batal</Text>
-            </Button>
-            <Button bgColor="$blue600" onPress={handleAddCup}>
-              <Text color="white">Tambah</Text>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {}
-      <Modal isOpen={showAddDrink} onClose={() => setShowAddDrink(false)}>
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Heading>Tambah Jenis Minuman</Heading>
-            <Text size="xs" color="$muted">Masukkan nama & level gula</Text>
-          </ModalHeader>
-
-          <ModalBody>
-            <VStack space="sm">
-              <Input>
-                <InputField
-                  placeholder="Teh Manis"
-                  value={newDrinkName}
-                  onChangeText={setNewDrinkName}
-                />
-              </Input>
-
-              <Text size="sm">Level Gula</Text>
-              <HStack>
-                {["Rendah", "Sedang", "Tinggi"].map((lvl) => {
-                  const active = newDrinkSugar === lvl;
-                  return (
-                    <Pressable
-                      key={lvl}
-                      onPress={() => setNewDrinkSugar(lvl)}
-                      style={{
-                        padding: 10,
-                        marginRight: 6,
-                        borderRadius: 10,
-                        backgroundColor: active
-                          ? lvl === "Rendah"
-                            ? "#e6fffa"
-                            : lvl === "Sedang"
-                            ? "#fff7ed"
-                            : "#fff1f2"
-                          : "#f8fafc",
-                        borderWidth: 1,
-                        borderColor: active
-                          ? lvl === "Rendah"
-                            ? "#10b981"
-                            : lvl === "Sedang"
-                            ? "#f59e0b"
-                            : "#ef4444"
-                          : "#e5e7eb",
-                      }}
-                    >
-                      <Text>{lvl}</Text>
-                    </Pressable>
-                  );
-                })}
-              </HStack>
-            </VStack>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button mr="$3" onPress={() => setShowAddDrink(false)}>
-              <Text>Batal</Text>
-            </Button>
-            <Button bgColor="$green600" onPress={handleAddDrink}>
-              <Text color="white">Tambah</Text>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </ScrollView>
   );
 }
