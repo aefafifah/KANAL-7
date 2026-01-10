@@ -16,14 +16,13 @@ import {
 import {
   User,
   Settings,
-  Shield,
   LogOut,
   Star,
   ChevronRight,
 } from "lucide-react-native";
+import { STORAGE_KEYS } from '../../src/constants/storage';
 
-import { get, ref as dbRef } from "firebase/database";
-import { auth, db } from "../../src/config/firebase";
+import { auth } from "../../src/config/firebase";
 
 export default function Profile() {
   const router = useRouter();
@@ -39,7 +38,7 @@ export default function Profile() {
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
-        const saved = await AsyncStorage.getItem("personal-info");
+        const saved = await AsyncStorage.getItem(STORAGE_KEYS.PERSONAL_INFO);
 
         if (saved) {
           const p = JSON.parse(saved);
@@ -48,17 +47,33 @@ export default function Profile() {
             email: p.email || "",
             photoUrl: p.photoUrl || "",
           });
+          
+          // Simpan ke challenge profile juga
+          const profileForChallenge = {
+            id: 'current_user',
+            name: p.username || "User",
+            username: p.username || "",
+            email: p.email || "",
+            photoUrl: p.photoUrl || "",
+            gender: p.gender || "",
+            birthdate: p.birthdate || "",
+            region: p.region || "Local",
+            joinDate: new Date().toISOString().split('T')[0]
+          };
+          
+          await AsyncStorage.setItem(
+            STORAGE_KEYS.USER_PROFILE, 
+            JSON.stringify(profileForChallenge)
+          );
         }
 
-        const streak = await AsyncStorage.getItem("streak-level");
+        const streak = await AsyncStorage.getItem(STORAGE_KEYS.STREAK_LEVEL);
         setStreakLevel(streak ? parseInt(streak) : 1);
       };
 
       load();
     }, [])
   );
-
-
 
   const logout = async () => {
     await AsyncStorage.clear();
@@ -72,7 +87,6 @@ export default function Profile() {
 
       <ScrollView bg="#EEF2FF">
         <VStack space="lg" p="$4">
-
           {/* ===== HEADER CENTER ===== */}
           <VStack alignItems="center" space="sm" mt="$4">
             <Avatar size="2xl" bg="#3B82F6">

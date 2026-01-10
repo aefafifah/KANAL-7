@@ -47,26 +47,12 @@ import {
   Award,
   Zap,
   Users,
-  User
 } from "lucide-react-native";
+import { STORAGE_KEYS, DEFAULT_PROFILE } from '../src/constants/storage';
 
 // ========== KONFIGURASI ==========
 const API_BASE_URL = 'http://192.168.229.195:3001';
 const USE_API_MODE = false;
-
-// Storage keys
-const STORAGE_KEYS = {
-  COIN: '@challenge_coin',
-  POINTS: '@challenge_points',
-  COMPLETED: '@challenge_completed',
-  STREAK: '@challenge_streak',
-  LAST_DATE: '@challenge_last_date',
-  DAILY_PROGRESS: '@challenge_daily_progress',
-  MAX_DAILY: '@challenge_max_daily',
-  MOOD: '@challenge_mood',
-  USER_PROFILE: '@user_profile', // Tambahkan untuk profil
-  LEADERBOARD: '@leaderboard_cache' // Cache untuk leaderboard
-};
 
 // Warna tema
 const PRIMARY = "#2563EB";
@@ -101,15 +87,8 @@ export default function ChallengeWater() {
   
   // User profile state
   const [userProfile, setUserProfile] = useState({
-    id: 'current_user',
-    name: "Kamu",
-    username: "",
-    email: "",
-    gender: "",
-    birthdate: "",
-    photoUrl: "",
-    region: "Local",
-    joinDate: new Date().toISOString().split('T')[0]
+    ...DEFAULT_PROFILE,
+    name: "Kamu"
   });
 
   // Leaderboard state
@@ -131,42 +110,114 @@ export default function ChallengeWater() {
     { id: 6, title: "Minum tanpa plastik sehari", reward: 25, points: 40, category: "eco", icon: "🌱" },
   ];
 
-  // Load user profile
+  // Load user profile - UPDATED
   const loadUserProfile = async () => {
     try {
-      const savedProfile = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+      console.log('📱 Loading user profile...');
+      
+      // Coba load dari key challenge dulu
+      let savedProfile = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+      
+      if (!savedProfile) {
+        console.log('📱 No USER_PROFILE, trying PERSONAL_INFO...');
+        // Fallback ke personal-info dari Profile.js
+        savedProfile = await AsyncStorage.getItem(STORAGE_KEYS.PERSONAL_INFO);
+      }
+      
       if (savedProfile) {
         const profile = JSON.parse(savedProfile);
-        setUserProfile(prev => ({
-          ...prev,
+        console.log('📱 Profile loaded:', profile);
+        
+        const updatedProfile = {
+          ...DEFAULT_PROFILE,
           ...profile,
-          name: profile.name || "Kamu",
+          name: profile.username || profile.name || "Kamu",
           username: profile.username || "",
-          region: profile.region || "Local"
-        }));
+          region: profile.region || "Local",
+          photoUrl: profile.photoUrl || ""
+        };
+        
+        setUserProfile(updatedProfile);
+        
+        // Update leaderboard dengan profil yang baru
+        updateLeaderboardWithProfile(updatedProfile);
+        
+        return updatedProfile;
+      } else {
+        console.log('📱 No profile found in storage');
+        return null;
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('❌ Error loading profile:', error);
+      return null;
     }
   };
 
-  // Load leaderboard data (dari API atau cache)
-  const loadLeaderboard = async () => {
+  // Update leaderboard dengan profile yang baru
+  const updateLeaderboardWithProfile = (profile) => {
+    setLeaderboard(prev => {
+      // Cari apakah user sudah ada di leaderboard
+      const existingIndex = prev.findIndex(user => user.id === 'current_user');
+      
+      if (existingIndex !== -1) {
+        // Update existing user
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          name: profile.name,
+          username: profile.username || "kamu",
+          avatar: profile.photoUrl,
+          region: profile.region
+        };
+        return updated.sort((a, b) => b.score - a.score);
+      } else {
+        // Tambah user baru ke leaderboard
+        const userEntry = {
+          id: 'current_user',
+          name: profile.name,
+          username: profile.username || "kamu",
+          score: points,
+          coins: coin,
+          avatar: profile.photoUrl,
+          region: profile.region
+        };
+        
+        const combined = [userEntry, ...DEFAULT_LEADERBOARD]
+          .sort((a, b) => b.score - a.score);
+        
+        return combined;
+      }
+    });
+  };
+
+  // Load leaderboard data (dari API atau cache) - UPDATED
+  const loadLeaderboard = async (forceUpdate = false) => {
     try {
       // Coba load dari cache dulu
       const cachedLeaderboard = await AsyncStorage.getItem(STORAGE_KEYS.LEADERBOARD);
       
-      if (cachedLeaderboard) {
+      if (cachedLeaderboard && !forceUpdate) {
         const parsed = JSON.parse(cachedLeaderboard);
-        // Update current user's data
-        const updated = parsed.map(user => 
-          user.id === 'current_user' 
-            ? { ...user, score: points, coins: coin }
-            : user
-        ).sort((a, b) => b.score - a.score);
+        
+        // Update current user's data dengan profile terbaru
+        const updated = parsed.map(user => {
+          if (user.id === 'current_user') {
+            return {
+              ...user,
+              score: points,
+              coins: coin,
+              name: userProfile.name,
+              username: userProfile.username || "kamu",
+              avatar: userProfile.photoUrl,
+              region: userProfile.region
+            };
+          }
+          return user;
+        }).sort((a, b) => b.score - a.score);
+        
         setLeaderboard(updated);
       } else {
-        // Gunakan default leaderboard dengan user saat ini
+        // Buat leaderboard baru dengan user saat ini
         const userEntry = {
           id: 'current_user',
           name: userProfile.name,
@@ -181,6 +232,7 @@ export default function ChallengeWater() {
           .sort((a, b) => b.score - a.score);
         
         setLeaderboard(combined);
+        
         // Simpan ke cache
         await AsyncStorage.setItem(STORAGE_KEYS.LEADERBOARD, JSON.stringify(combined));
       }
@@ -373,6 +425,9 @@ export default function ChallengeWater() {
       // Update streak
       await checkStreak();
       
+      // Update leaderboard setelah perubahan points/coin
+      await loadLeaderboard(true);
+      
     } catch (error) {
       console.error('Error toggling challenge:', error);
       showCustomAlert("Error", 'Gagal menyimpan progress');
@@ -399,7 +454,9 @@ export default function ChallengeWater() {
       
       await initializeData();
       await loadData();
-      await loadLeaderboard();
+      // Load profile dulu sebelum leaderboard
+      await loadUserProfile();
+      await loadLeaderboard(true);
       showCustomAlert("Berhasil", "Data direset ke default");
     } catch (error) {
       showCustomAlert("Error", "Gagal mereset data");
@@ -439,45 +496,68 @@ export default function ChallengeWater() {
     }
   };
 
-  // Update leaderboard saat points/coin berubah
+  // Update leaderboard saat points/coin berubah - UPDATED
   useEffect(() => {
     const updateLeaderboard = async () => {
-      const updated = leaderboard.map(user => 
-        user.id === 'current_user' 
-          ? { 
-              ...user, 
-              score: points, 
-              coins: coin,
-              name: userProfile.name,
-              username: userProfile.username || "kamu",
-              avatar: userProfile.photoUrl
-            } 
-          : user
-      ).sort((a, b) => b.score - a.score);
+      const updated = leaderboard.map(user => {
+        if (user.id === 'current_user') {
+          return {
+            ...user,
+            score: points,
+            coins: coin,
+            name: userProfile.name,
+            username: userProfile.username || "kamu",
+            avatar: userProfile.photoUrl,
+            region: userProfile.region
+          };
+        }
+        return user;
+      }).sort((a, b) => b.score - a.score);
       
       setLeaderboard(updated);
       // Simpan ke cache
       await AsyncStorage.setItem(STORAGE_KEYS.LEADERBOARD, JSON.stringify(updated));
     };
     
-    updateLeaderboard();
-  }, [points, coin, userProfile]);
+    if (leaderboard.length > 0) {
+      updateLeaderboard();
+    }
+  }, [points, coin]);
 
-  // Load data saat component mount
+  // Update leaderboard saat userProfile berubah - NEW
+  useEffect(() => {
+    if (userProfile && userProfile.name !== "Kamu") {
+      updateLeaderboardWithProfile(userProfile);
+    }
+  }, [userProfile]);
+
+  // Load data saat component mount - UPDATED
   useFocusEffect(
     useCallback(() => {
       const init = async () => {
         setLoading(true);
+        console.log('🔄 Initializing ChallengeWater...');
         await initializeData();
         await loadData();
-        await loadUserProfile();
-        await loadLeaderboard();
+        
+        // Load profile dulu, tunggu selesai
+        const profile = await loadUserProfile();
+        
+        // Setelah profile loaded, baru load leaderboard
+        if (profile) {
+          await loadLeaderboard(true);
+        } else {
+          await loadLeaderboard(false);
+        }
+        
         setLoading(false);
         
         // Test API connection saat startup
         if (apiMode) {
           await testAPIConnection();
         }
+        
+        console.log('✅ ChallengeWater initialized');
       };
       
       init();
@@ -509,6 +589,22 @@ export default function ChallengeWater() {
       case 1: return "🥈";
       case 2: return "🥉";
       default: return `${index + 1}.`;
+    }
+  };
+
+  // Fungsi untuk refresh semua data - UPDATED
+  const refreshAllData = async () => {
+    setLoading(true);
+    try {
+      await loadData();
+      await loadUserProfile();
+      await loadLeaderboard(true);
+      showCustomAlert("Data Diperbarui", "Profil dan leaderboard berhasil diupdate!");
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      showCustomAlert("Error", "Gagal memperbarui data");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -587,7 +683,7 @@ export default function ChallengeWater() {
                 </VStack>
                 <Box bg="#DBEAFE" px="$3" py="$1" rounded="$full">
                   <Text fontSize="$sm" fontWeight="bold" color={PRIMARY}>
-                    #{leaderboard.findIndex(u => u.id === 'current_user') + 1}
+                    #{leaderboard.findIndex(u => u.id === 'current_user') + 1 || 1}
                   </Text>
                 </Box>
               </HStack>
@@ -884,84 +980,87 @@ export default function ChallengeWater() {
             </HStack>
 
             <VStack space="sm">
-              {leaderboard.slice(0, 5).map((user, index) => (
-                <Box
-                  key={user.id}
-                  bg={
-                    user.id === 'current_user'
-                      ? "#DBEAFE"
-                      : index === 0
-                      ? "#FEF3C7"
-                      : index === 1
-                      ? "#F1F5F9"
-                      : index === 2
-                      ? "#FEF3C7"
-                      : CARD_BG
-                  }
-                  p="$3"
-                  rounded="$xl"
-                  borderWidth={2}
-                  borderColor={
-                    user.id === 'current_user'
-                      ? "#BFDBFE"
-                      : index === 0
-                      ? "#FDE68A"
-                      : index === 1
-                      ? "#E5E7EB"
-                      : index === 2
-                      ? "#FDE68A"
-                      : "#E5E7EB"
-                  }
-                >
-                  <HStack justifyContent="space-between" alignItems="center">
-                    <HStack alignItems="center" space="sm" flex={1}>
-                      <Text fontWeight="bold" fontSize="$lg" color={
-                        user.id === 'current_user' ? "#1E40AF" : 
-                        index === 0 ? "#92400E" : "#1E293B"
-                      }>
-                        {getRankEmoji(index)}
-                      </Text>
-                      
-                      <Avatar size="sm" bg="#DBEAFE">
-                        {user.avatar ? (
-                          <AvatarImage source={{ uri: user.avatar }} />
-                        ) : (
-                          <AvatarFallbackText>
-                            {getAvatarFallback(user.name)}
-                          </AvatarFallbackText>
-                        )}
-                      </Avatar>
-                      
-                      <VStack flex={1}>
-                        <HStack alignItems="center" space="xs">
-                          <Text fontWeight="bold" numberOfLines={1}>
-                            {user.name}
-                          </Text>
-                          {index === 0 && <Award size={14} color="#F59E0B" />}
-                          {user.id === 'current_user' && (
-                            <Badge size="xs" bg={PRIMARY}>
-                              <Text color="$white" fontSize="$xs">Kamu</Text>
-                            </Badge>
+              {leaderboard.slice(0, 5).map((user, index) => {
+                const isCurrentUser = user.id === 'current_user';
+                return (
+                  <Box
+                    key={user.id}
+                    bg={
+                      isCurrentUser
+                        ? "#DBEAFE"
+                        : index === 0
+                        ? "#FEF3C7"
+                        : index === 1
+                        ? "#F1F5F9"
+                        : index === 2
+                        ? "#FEF3C7"
+                        : CARD_BG
+                    }
+                    p="$3"
+                    rounded="$xl"
+                    borderWidth={2}
+                    borderColor={
+                      isCurrentUser
+                        ? "#BFDBFE"
+                        : index === 0
+                        ? "#FDE68A"
+                        : index === 1
+                        ? "#E5E7EB"
+                        : index === 2
+                        ? "#FDE68A"
+                        : "#E5E7EB"
+                    }
+                  >
+                    <HStack justifyContent="space-between" alignItems="center">
+                      <HStack alignItems="center" space="sm" flex={1}>
+                        <Text fontWeight="bold" fontSize="$lg" color={
+                          isCurrentUser ? "#1E40AF" : 
+                          index === 0 ? "#92400E" : "#1E293B"
+                        }>
+                          {getRankEmoji(index)}
+                        </Text>
+                        
+                        <Avatar size="sm" bg="#DBEAFE">
+                          {user.avatar ? (
+                            <AvatarImage source={{ uri: user.avatar }} />
+                          ) : (
+                            <AvatarFallbackText>
+                              {getAvatarFallback(user.name)}
+                            </AvatarFallbackText>
                           )}
+                        </Avatar>
+                        
+                        <VStack flex={1}>
+                          <HStack alignItems="center" space="xs">
+                            <Text fontWeight="bold" numberOfLines={1}>
+                              {user.name}
+                            </Text>
+                            {index === 0 && <Award size={14} color="#F59E0B" />}
+                            {isCurrentUser && (
+                              <Badge size="xs" bg={PRIMARY}>
+                                <Text color="$white" fontSize="$xs">Kamu</Text>
+                              </Badge>
+                            )}
+                          </HStack>
+                          <Text fontSize="$xs" color="#64748B" numberOfLines={1}>
+                            @{user.username} • {user.region}
+                          </Text>
+                        </VStack>
+                      </HStack>
+                      
+                      <VStack alignItems="flex-end">
+                        <HStack alignItems="center" space="xs">
+                          <Coins size={14} color="#FACC15" />
+                          <Text fontWeight="bold" color="#92400E">{user.coins}</Text>
                         </HStack>
-                        <Text fontSize="$xs" color="#64748B" numberOfLines={1}>
-                          @{user.username} • {user.region}
+                        <Text fontSize="$xs" color="#64748B">
+                          {user.score} pts
                         </Text>
                       </VStack>
                     </HStack>
-                    
-                    <VStack alignItems="flex-end">
-                      <HStack alignItems="center" space="xs">
-                        <Coins size={14} color="#FACC15" />
-                        <Text fontWeight="bold" color="#92400E">{user.coins}</Text>
-                      </HStack>
-                      <Text fontSize="$xs" color="#64748B">
-                        {user.score} pts
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </Box>
-              ))}
+                  </Box>
+                );
+              })}
               
               {/* View All Button */}
               {leaderboard.length > 5 && (
@@ -1005,14 +1104,10 @@ export default function ChallengeWater() {
               <HStack justifyContent="space-between">
                 <Text color="#64748B">Peringkat</Text>
                 <Text fontWeight="bold">
-                  #{leaderboard.findIndex(u => u.id === 'current_user') + 1} dari {leaderboard.length}
+                  #{leaderboard.findIndex(u => u.id === 'current_user') + 1 || 1} dari {leaderboard.length}
                 </Text>
               </HStack>
-              <Button mt="$3" variant="link" onPress={async () => {
-                await loadData();
-                await loadLeaderboard();
-                showCustomAlert("Data Diperbarui", "Data berhasil direfresh!");
-              }}>
+              <Button mt="$3" variant="link" onPress={refreshAllData}>
                 <RefreshCw size={16} color={PRIMARY} />
                 <ButtonText ml="$2" color={PRIMARY}>Refresh Data</ButtonText>
               </Button>
@@ -1096,16 +1191,6 @@ export default function ChallengeWater() {
                       @{userProfile.username || "Belum diatur"}
                     </Text>
                   </VStack>
-                  <Button 
-                    size="xs" 
-                    variant="outline"
-                    onPress={() => {
-                      setShowSettings(false);
-                      // Navigate to profile edit
-                    }}
-                  >
-                    <ButtonText>Edit</ButtonText>
-                  </Button>
                 </HStack>
               </VStack>
             </VStack>
