@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/kanalminum.png",
       "resizeMode": "contain",
       "scheme": "my-scheme",
       "backgroundColor": "#ffffff"

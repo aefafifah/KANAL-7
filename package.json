@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "server": "node server.js",
+    "server:dev": "nodemon server.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -14,13 +16,19 @@
     "@gluestack-ui/accordion": "^1.0.14",
     "@gluestack-ui/config": "^1.1.20",
     "@gluestack-ui/themed": "^1.1.73",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@supabase/supabase-js": "^2.90.1",
+    "cors": "^2.8.5",
     "dayjs": "^1.11.19",
+    "deps": "^1.0.0",
     "expo": "~54.0.0",
     "expo-constants": "~18.0.10",
     "expo-linking": "~8.0.8",
     "expo-router": "~6.0.14",
     "expo-status-bar": "~3.0.8",
+    "express": "^5.2.1",
     "gluestack": "^0.1.1",
+    "legacy": "^0.0.3",
     "lucide-react-native": "^0.553.0",
     "metro": "^0.83.1",
     "react": "^19.1.0",
@@ -36,6 +44,8 @@
   "private": true,
   "devDependencies": {
     "babel-preset-expo": "~54.0.0",
+    "json-server": "^1.0.0-beta.3",
+    "nodemon": "^3.0.1",
     "react-dom": "^19.1.0"
   }
 }
