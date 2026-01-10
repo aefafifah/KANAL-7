@@ -16,6 +16,10 @@ import { useRouter } from "expo-router";
 
 import WaterCard from "../../components/WaterCard";
 import { ArrowRight, Droplet, Lock, Unlock } from "lucide-react-native";
+import {
+  addWaterEntry,
+  listenWaterEntriesByDate,
+} from "../../src/actions/waterActions";
 
 const PRIMARY = "#2563EB";
 const SOFT_BG = "#EEF2FF";
@@ -65,38 +69,25 @@ const HomeScreen = () => {
     await AsyncStorage.setItem("streak-date", today);
   };
 
-  // load history hari ini saat screen dibuka
-  const loadTodayHistory = async () => {
-    const key = `water-history-${getTodayKey()}`;
-    const saved = await AsyncStorage.getItem(key);
-    if (saved) {
-      setHistory(JSON.parse(saved));
-    } else {
-      setHistory([]);
-    }
-  };
-
   useEffect(() => {
-    loadTodayHistory();
+    let unsubscribe = () => {};
+    let isMounted = true;
+
+    (async () => {
+      unsubscribe = await listenWaterEntriesByDate(getTodayKey(), (entries) => {
+        if (isMounted) setHistory(entries);
+      });
+    })();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // simpan history setiap kali minum
   const handleDrink = async (amount) => {
-    const key = `water-history-${getTodayKey()}`;
-
-    const newEntry = {
-      amount,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      timestamp: Date.now(),
-    };
-
-    const updatedHistory = [newEntry, ...history];
-    setHistory(updatedHistory);
-
-    await AsyncStorage.setItem(key, JSON.stringify(updatedHistory));
+    await addWaterEntry(getTodayKey(), amount);
   };
 
   const handleLockToggle = () => {
