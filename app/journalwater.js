@@ -10,10 +10,14 @@ import {
   Input,
   InputField,
 } from "@gluestack-ui/themed";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Trash2, Pencil } from "lucide-react-native";
 import { LineChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
+import {
+  deleteWaterEntry,
+  listenWaterEntriesByDate,
+  updateWaterEntry,
+} from "../src/actions/waterActions";
 
 const PRIMARY = "#2563EB";
 const SOFT_BG = "#EEF2FF";
@@ -27,35 +31,37 @@ const getTodayKey = () => {
 
 const JournalWater = () => {
   const [history, setHistory] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
+  const [editId, setEditId] = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  const storageKey = `water-history-${getTodayKey()}`;
-
-  // load history
-  const loadHistory = async () => {
-    const saved = await AsyncStorage.getItem(storageKey);
-    setHistory(saved ? JSON.parse(saved) : []);
-  };
-
   useEffect(() => {
-    loadHistory();
+    let unsubscribe = () => {};
+    let isMounted = true;
+
+    (async () => {
+      unsubscribe = await listenWaterEntriesByDate(getTodayKey(), (entries) => {
+        if (isMounted) setHistory(entries);
+      });
+    })();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // hapus history
-  const deleteHistory = async (index) => {
-    const updated = history.filter((_, i) => i !== index);
-    setHistory(updated);
-    await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+  const deleteHistory = async (entryId) => {
+    await deleteWaterEntry(getTodayKey(), entryId);
   };
 
   // simpan edit
   const saveEdit = async () => {
-    const updated = [...history];
-    updated[editIndex].amount = parseInt(editValue);
-    setHistory(updated);
-    await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
-    setEditIndex(null);
+    if (!editId) return;
+    await updateWaterEntry(getTodayKey(), editId, {
+      amount: parseInt(editValue),
+    });
+    setEditId(null);
     setEditValue("");
   };
 
@@ -112,14 +118,14 @@ const JournalWater = () => {
               </Text>
             )}
 
-            {history.map((item, index) => (
+            {history.map((item) => (
               <Box
-                key={index}
+                key={item.id}
                 bg="#F8FAFC"
                 p="$3"
                 rounded="$lg"
               >
-                {editIndex === index ? (
+                {editId === item.id ? (
                   <HStack space="sm" alignItems="center">
                     <Input flex={1}>
                       <InputField
@@ -143,14 +149,14 @@ const JournalWater = () => {
                     <HStack space="sm">
                       <Pressable
                         onPress={() => {
-                          setEditIndex(index);
+                          setEditId(item.id);
                           setEditValue(String(item.amount));
                         }}
                       >
                         <Pencil size={18} color={PRIMARY} />
                       </Pressable>
 
-                      <Pressable onPress={() => deleteHistory(index)}>
+                      <Pressable onPress={() => deleteHistory(item.id)}>
                         <Trash2 size={18} color="#EF4444" />
                       </Pressable>
                     </HStack>

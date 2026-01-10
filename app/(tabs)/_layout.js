@@ -229,7 +229,7 @@ export default function TabsLayout() {
             headerLeft: () => (
               <HeaderHamburger onPress={() => setDrawerVisible(true)} />
             ),
-            headerRight: () => <HeaderAvatar />,
+            headerRight: () => <Box w={40} />,
             tabBarIcon: ({ color }) => <Users color={color} />,
           }}
         />

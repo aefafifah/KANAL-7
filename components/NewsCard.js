@@ -1,9 +1,28 @@
-import { Box, Image, Text, VStack, Heading, Pressable } from '@gluestack-ui/themed';
+import { Box, Image, Text, VStack, Heading, Pressable } from "@gluestack-ui/themed";
+import { useRouter } from "expo-router";
 
 const NewsCard = ({ post, size = 'large' }) => {
-  
+  const router = useRouter();
+
+  const getImageUrl = () => {
+    if (!post?.urlToImage) return "";
+    if (typeof post.urlToImage === "string") return post.urlToImage;
+    if (post.urlToImage?.uri) return post.urlToImage.uri;
+    return "";
+  };
+
   const handlePress = () => {
-    alert(`Membuka info untuk: ${post.title}`);
+    const newsId = String(post.newsId ?? post.id ?? "detail");
+    const params = {
+      id: newsId,
+      title: post.title || "",
+      description: post.description || "",
+      sourceName: post.source?.name || "",
+      imageUrl: getImageUrl(),
+      url: post.url || post.link || "",
+    };
+
+    router.push({ pathname: "/news-detail/[id]", params });
   };
 
   if (size === 'large') {
