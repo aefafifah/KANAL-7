@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
+  ScrollView,
+  Box,
   Text,
   Heading,
-  Card,
   Progress,
   ProgressFilledTrack,
   Icon,
-  ScrollView,
   Divider,
   HStack,
   VStack,
@@ -24,6 +23,10 @@ import {
   Star,
 } from "lucide-react-native";
 
+const PRIMARY = "#2563EB";
+const SOFT_BG = "#EEF2FF";
+const CARD_BG = "$white";
+
 export default function ChallengeWater({
   mood = "Semangat",
   hari = "Kamis, 13 November",
@@ -34,11 +37,10 @@ export default function ChallengeWater({
   const [completedChallenges, setCompletedChallenges] = useState([]);
   const [currentProgress, setCurrentProgress] = useState(progress);
 
-  // Leaderboard awal (dummy)
   const [leaderboard, setLeaderboard] = useState([
     { id: 2, name: "Bagus", score: 190, coins: 60 },
     { id: 3, name: "Dewi", score: 160, coins: 55 },
-    { id: 4, name: "Kamu", score: points, coins: coin }, // posisi user sendiri
+    { id: 4, name: "Kamu", score: points, coins: coin },
   ]);
 
   const challenges = [
@@ -76,7 +78,6 @@ export default function ChallengeWater({
     }
   };
 
-  // Update leaderboard otomatis ketika points/coin berubah
   useEffect(() => {
     const updated = leaderboard.map((user) =>
       user.name === "Kamu" ? { ...user, score: points, coins: coin } : user
@@ -88,173 +89,179 @@ export default function ChallengeWater({
   const allDone = completedChallenges.length === challenges.length;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16 }}>
-      {/* Header */}
-      <VStack space="xs" alignItems="center" mt="$3">
-        <Icon as={Droplet} size="md" color="#3B82F6" />
-        <Heading color="#2563EB">Tantangan Harian Air</Heading>
-        <Text color="$muted">{hari}</Text>
-        <HStack space="xs" alignItems="center" mt="$1">
-          <Icon as={Smile} size="sm" color="#FACC15" />
-          <Text fontSize="$sm">
-            Mood hari ini: <Text fontWeight="bold">{mood}</Text>
-          </Text>
-        </HStack>
-      </VStack>
+    <ScrollView flex={1} bg={SOFT_BG}>
+      <VStack space="lg" p="$4">
 
-      {/* Coin & Points Overview */}
-      <HStack
-        justifyContent="space-around"
-        alignItems="center"
-        mt="$6"
-        p="$3"
-        borderRadius="$xl"
-        backgroundColor="#EFF6FF"
-      >
-        <HStack alignItems="center" space="sm">
-          <Icon as={Coins} size="lg" color="#FACC15" />
-          <VStack>
-            <Text fontSize="$sm" color="$muted">
-              Koin
+        {/* ===== HEADER ===== */}
+        <Box alignItems="center">
+          <Box bg="#DBEAFE" p="$3" rounded="$full" mb="$2">
+            <Droplet size={28} color={PRIMARY} />
+          </Box>
+          <Heading color={PRIMARY}>Tantangan Harian Air</Heading>
+          <Text color="#64748B">{hari}</Text>
+
+          <HStack alignItems="center" space="xs" mt="$2">
+            <Smile size={16} color="#FACC15" />
+            <Text fontSize="$sm">
+              Mood hari ini: <Text fontWeight="bold">{mood}</Text>
             </Text>
-            <Text fontWeight="bold" fontSize="$lg">
-              {coin}
-            </Text>
+          </HStack>
+        </Box>
+
+        {/* ===== COIN & POINTS ===== */}
+        <Box bg={CARD_BG} p="$4" rounded="$2xl" shadow="$1">
+          <HStack justifyContent="space-around">
+            <HStack alignItems="center" space="sm">
+              <Coins size={22} color="#FACC15" />
+              <VStack>
+                <Text fontSize="$sm" color="#64748B">
+                  Koin
+                </Text>
+                <Text fontWeight="bold" fontSize="$lg">
+                  {coin}
+                </Text>
+              </VStack>
+            </HStack>
+
+            <Divider orientation="vertical" h="$10" />
+
+            <HStack alignItems="center" space="sm">
+              <Star size={22} color="#F59E0B" />
+              <VStack>
+                <Text fontSize="$sm" color="#64748B">
+                  Poin
+                </Text>
+                <Text fontWeight="bold" fontSize="$lg">
+                  {points} pts
+                </Text>
+              </VStack>
+            </HStack>
+          </HStack>
+        </Box>
+
+        {/* ===== PROGRESS ===== */}
+        <Box bg={CARD_BG} p="$4" rounded="$2xl" shadow="$1">
+          <Text fontWeight="bold" mb="$2">
+            Progress Hari Ini
+          </Text>
+          <Progress value={currentProgress} h={10} borderRadius="$full">
+            <ProgressFilledTrack bgColor={PRIMARY} />
+          </Progress>
+          <Text mt="$2" textAlign="right" color="#64748B">
+            {Math.round(currentProgress)}%
+          </Text>
+        </Box>
+
+        {/* ===== CHALLENGES ===== */}
+        <Box>
+          <Text fontSize="$lg" fontWeight="bold" mb="$2">
+            Daftar Tantangan
+          </Text>
+
+          <VStack space="sm">
+            {challenges.map((item) => {
+              const done = completedChallenges.includes(item.id);
+              return (
+                <Box
+                  key={item.id}
+                  bg={CARD_BG}
+                  p="$4"
+                  rounded="$2xl"
+                  borderWidth={1}
+                  borderColor={done ? "#22C55E" : "#E5E7EB"}
+                >
+                  <HStack justifyContent="space-between" alignItems="center">
+                    <HStack space="sm" alignItems="center">
+                      <Icon
+                        as={done ? CheckCircle2 : Circle}
+                        color={done ? "#22C55E" : "#CBD5E1"}
+                        size="lg"
+                        onPress={() =>
+                          handleToggleChallenge(
+                            item.id,
+                            item.reward,
+                            item.points
+                          )
+                        }
+                      />
+                      <VStack>
+                        <Text fontWeight="bold">{item.title}</Text>
+                        <Text fontSize="$sm" color="#64748B">
+                          +{item.reward} Koin • +{item.points} Pts
+                        </Text>
+                      </VStack>
+                    </HStack>
+
+                    {done && (
+                      <Badge bgColor="#DCFCE7" rounded="$full">
+                        <Text color="#166534">Selesai</Text>
+                      </Badge>
+                    )}
+                  </HStack>
+                </Box>
+              );
+            })}
           </VStack>
-        </HStack>
+        </Box>
 
-        <Divider orientation="vertical" h="$10" />
-
-        <HStack alignItems="center" space="sm">
-          <Icon as={Star} size="lg" color="#F59E0B" />
-          <VStack>
-            <Text fontSize="$sm" color="$muted">
-              Poin
-            </Text>
-            <Text fontWeight="bold" fontSize="$lg">
-              {points} pts
-            </Text>
-          </VStack>
-        </HStack>
-      </HStack>
-
-      {/* Progress */}
-      <View mt="$5">
-        <Text mb="$1" fontWeight="bold">
-          Progress Hari Ini
-        </Text>
-        <Progress value={currentProgress} h={10} borderRadius="$full">
-          <ProgressFilledTrack
-            bgColor={allDone ? "$success700" : "$primary500"}
-          />
-        </Progress>
-        <Text mt="$1" textAlign="right" color="$muted">
-          {Math.round(currentProgress)}%
-        </Text>
-      </View>
-
-      <Divider my="$4" />
-
-      {/* Challenges List */}
-      <VStack space="md">
-        <Text fontSize="$lg" fontWeight="bold">
-          Daftar Tantangan
-        </Text>
-
-        {challenges.map((item) => {
-          const done = completedChallenges.includes(item.id);
-          return (
-            <Card
-              key={item.id}
-              p="$4"
-              borderRadius="$lg"
-              backgroundColor={done ? "#ECFDF5" : "#F9FAFB"}
-              borderColor={done ? "#16A34A" : "#E5E7EB"}
-              borderWidth={1}
-              shadowColor="#000"
-              shadowOffset={{ width: 0, height: 1 }}
-              shadowOpacity={0.1}
-              shadowRadius={2}
-            >
-              <HStack justifyContent="space-between" alignItems="center">
-                <HStack alignItems="center" space="sm">
-                  <Icon
-                    as={done ? CheckCircle2 : Circle}
-                    color={done ? "#16A34A" : "#9CA3AF"}
-                    size="lg"
-                    onPress={() =>
-                      handleToggleChallenge(item.id, item.reward, item.points)
-                    }
-                  />
-                  <VStack>
-                    <Text fontWeight="bold">{item.title}</Text>
-                    <Text color="$muted" fontSize="$sm">
-                      +{item.reward} Koin • +{item.points} Pts
-                    </Text>
-                  </VStack>
-                </HStack>
-                {done && (
-                  <Badge bgColor="$success100" borderRadius="$full" px="$2">
-                    <Text color="$success700">Selesai</Text>
-                  </Badge>
-                )}
-              </HStack>
-            </Card>
-          );
-        })}
-      </VStack>
-
-      {/* Reward Section */}
-      {allDone && (
-        <VStack alignItems="center" mt="$8" space="sm">
-          <Icon as={Gift} size="xl" color="#10B981" />
-          <Text color="$success700" fontWeight="bold" fontSize="$lg">
-            Semua tantangan selesai!
-          </Text>
-          <Text color="$muted" textAlign="center">
-            Hadiah: Voucher Air Zam-Zam atau Dashboard Juara Daerah
-          </Text>
-        </VStack>
-      )}
-
-      {/* Leaderboard */}
-      <View mt="$10" mb="$6">
-        <HStack alignItems="center" mb="$3">
-          <Icon as={Trophy} size="md" color="#F59E0B" mr="$2" />
-          <Heading size="md">Papan Juara Daerah</Heading>
-        </HStack>
-
-        {leaderboard.map((user, index) => (
-          <Card
-            key={user.id}
-            mb="$2"
-            p="$3"
-            borderRadius="$lg"
-            flexDirection="row"
-            justifyContent="space-between"
+        {/* ===== REWARD ===== */}
+        {allDone && (
+          <Box
+            bg="#ECFDF5"
+            p="$5"
+            rounded="$2xl"
             alignItems="center"
-            backgroundColor={
-              user.name === "Kamu"
-                ? "#DBEAFE"
-                : index === 0
-                ? "#FFF7E6"
-                : "#F9FAFB"
-            }
+            space="sm"
           >
-            <HStack space="sm" alignItems="center">
-              <Text fontWeight="bold">{index + 1}.</Text>
-              <Text>{user.name}</Text>
-            </HStack>
-            <HStack space="sm" alignItems="center">
-              <Icon as={Coins} color="#FACC15" size="lg" />
-              <Text fontWeight="bold" color="#FACC15">
-                {user.coins}
-              </Text>
-              <Text fontWeight="bold">{user.score} pts</Text>
-            </HStack>
-          </Card>
-        ))}
-      </View>
+            <Gift size={32} color="#10B981" />
+            <Text fontWeight="bold" color="#047857">
+              Semua tantangan selesai!
+            </Text>
+            <Text color="#065F46" textAlign="center">
+              Hadiah: Voucher Air Zam-Zam atau Dashboard Juara Daerah
+            </Text>
+          </Box>
+        )}
+
+        {/* ===== LEADERBOARD ===== */}
+        <Box>
+          <HStack alignItems="center" mb="$2">
+            <Trophy size={20} color="#F59E0B" />
+            <Text fontSize="$lg" fontWeight="bold" ml="$2">
+              Papan Juara Daerah
+            </Text>
+          </HStack>
+
+          <VStack space="sm">
+            {leaderboard.map((user, index) => (
+              <Box
+                key={user.id}
+                bg={
+                  user.name === "Kamu"
+                    ? "#DBEAFE"
+                    : index === 0
+                    ? "#FEF3C7"
+                    : CARD_BG
+                }
+                p="$3"
+                rounded="$xl"
+              >
+                <HStack justifyContent="space-between" alignItems="center">
+                  <Text fontWeight="bold">
+                    {index + 1}. {user.name}
+                  </Text>
+                  <HStack space="sm" alignItems="center">
+                    <Coins size={16} color="#FACC15" />
+                    <Text fontWeight="bold">{user.coins}</Text>
+                    <Text>{user.score} pts</Text>
+                  </HStack>
+                </HStack>
+              </Box>
+            ))}
+          </VStack>
+        </Box>
+
+      </VStack>
     </ScrollView>
   );
 }

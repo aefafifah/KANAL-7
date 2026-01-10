@@ -1,30 +1,48 @@
-import { useEffect, useState } from "react";
-import { Box, Text, Button, ButtonText, HStack } from "@gluestack-ui/themed";
+import { useEffect, useState, useRef } from "react";
+import {
+  Box,
+  Text,
+  Button,
+  ButtonText,
+  HStack,
+  Input,
+  InputField,
+} from "@gluestack-ui/themed";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { Droplet, RotateCcw } from "lucide-react-native";
 
-const WaterCard = ({ dailyGoal, onGoalComplete }) => {
+const WaterCard = ({ dailyGoal, onGoalComplete, onDrink }) => {
   const [currentIntake, setCurrentIntake] = useState(0);
-  const drinkAmount = 300;
+  const [drinkAmount, setDrinkAmount] = useState("300");
 
-  // Hitung persentase
+  const goalReachedRef = useRef(false);
+
   const percentage = dailyGoal > 0 ? (currentIntake / dailyGoal) * 100 : 0;
 
-  // Tambah air minum
   const addWater = () => {
-    const newAmount = Math.min(currentIntake + drinkAmount, dailyGoal);
+    const amount = parseInt(drinkAmount) || 0;
+    if (amount <= 0 || currentIntake >= dailyGoal) return;
+
+    const newAmount = Math.min(currentIntake + amount, dailyGoal);
     setCurrentIntake(newAmount);
+
+    // simpan ke history
+    onDrink?.(amount);
   };
 
-  // 🔄 RESET
   const resetWater = () => {
     setCurrentIntake(0);
+    goalReachedRef.current = false;
   };
 
-  // 🔥 Cek apakah goal tercapai
   useEffect(() => {
-    if (currentIntake >= dailyGoal && dailyGoal > 0) {
-      onGoalComplete?.(); // aman kalau props kosong
+    if (
+      currentIntake >= dailyGoal &&
+      dailyGoal > 0 &&
+      !goalReachedRef.current
+    ) {
+      goalReachedRef.current = true;
+      onGoalComplete?.();
     }
   }, [currentIntake, dailyGoal]);
 
@@ -47,20 +65,29 @@ const WaterCard = ({ dailyGoal, onGoalComplete }) => {
         lineCap="round"
       >
         {() => (
-          <Box alignItems="center" justifyContent="center">
+          <Box alignItems="center">
             <Droplet size={32} color="#3b82f6" />
-            <Text fontSize="$4xl" fontWeight="$bold" mt="$2">
+            <Text fontSize="$4xl" fontWeight="$bold">
               {currentIntake}
             </Text>
-            <Text fontSize="$md" color="$gray500">
-              / {dailyGoal} mL
-            </Text>
+            <Text color="$gray500">/ {dailyGoal} mL</Text>
           </Box>
         )}
       </AnimatedCircularProgress>
 
+      {/* INPUT JUMLAH MINUM */}
+      <Input mt="$4" w="60%">
+        <InputField
+          value={drinkAmount}
+          onChangeText={setDrinkAmount}
+          keyboardType="numeric"
+          placeholder="Jumlah (mL)"
+          textAlign="center"
+        />
+      </Input>
+
       {/* BUTTON AREA */}
-      <HStack mt="$6" space="md">
+      <HStack mt="$4" space="md">
         <Button
           size="lg"
           bg="$blue500"
@@ -68,18 +95,12 @@ const WaterCard = ({ dailyGoal, onGoalComplete }) => {
           onPress={addWater}
           isDisabled={currentIntake >= dailyGoal}
         >
-          <ButtonText>
-            {currentIntake >= dailyGoal
-              ? "Target Tercapai!"
-              : `Minum (${drinkAmount} mL)`}
-          </ButtonText>
+          <ButtonText>Minum</ButtonText>
         </Button>
 
-        {/* 🔄 RESET BUTTON */}
         <Button
           size="lg"
           variant="outline"
-          borderColor="$coolGray300"
           rounded="$full"
           onPress={resetWater}
           isDisabled={currentIntake === 0}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ScrollView,
   Box,
@@ -12,6 +12,7 @@ import {
   VStack,
 } from "@gluestack-ui/themed";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 import WaterCard from "../../components/WaterCard";
 import { ArrowRight, Droplet, Lock, Unlock } from "lucide-react-native";
@@ -19,10 +20,24 @@ import { ArrowRight, Droplet, Lock, Unlock } from "lucide-react-native";
 const PRIMARY = "#2563EB";
 const SOFT_BG = "#EEF2FF";
 
+// helper key tanggal hari ini
+const getTodayKey = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0]; // YYYY-MM-DD
+};
+
 const HomeScreen = () => {
+  const router = useRouter();
+
   const [inputGoal, setInputGoal] = useState("2500");
   const [lockedGoal, setLockedGoal] = useState(2500);
   const [isLocked, setIsLocked] = useState(true);
+
+  // history minum hari ini
+  const [history, setHistory] = useState([]);
+
+  // hanya ambil 5 history terbaru untuk Home
+  const previewHistory = history.slice(0, 5);
 
   // 🔥 Update streak ketika target minum tercapai
   const updateStreak = async () => {
@@ -50,6 +65,40 @@ const HomeScreen = () => {
     await AsyncStorage.setItem("streak-date", today);
   };
 
+  // load history hari ini saat screen dibuka
+  const loadTodayHistory = async () => {
+    const key = `water-history-${getTodayKey()}`;
+    const saved = await AsyncStorage.getItem(key);
+    if (saved) {
+      setHistory(JSON.parse(saved));
+    } else {
+      setHistory([]);
+    }
+  };
+
+  useEffect(() => {
+    loadTodayHistory();
+  }, []);
+
+  // simpan history setiap kali minum
+  const handleDrink = async (amount) => {
+    const key = `water-history-${getTodayKey()}`;
+
+    const newEntry = {
+      amount,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      timestamp: Date.now(),
+    };
+
+    const updatedHistory = [newEntry, ...history];
+    setHistory(updatedHistory);
+
+    await AsyncStorage.setItem(key, JSON.stringify(updatedHistory));
+  };
+
   const handleLockToggle = () => {
     if (isLocked) {
       setIsLocked(false);
@@ -66,7 +115,11 @@ const HomeScreen = () => {
       <VStack space="lg" p="$4">
 
         {/* ===== WATER CARD ===== */}
-        <WaterCard dailyGoal={lockedGoal} onGoalComplete={updateStreak} />
+        <WaterCard
+          dailyGoal={lockedGoal}
+          onGoalComplete={updateStreak}
+          onDrink={handleDrink}
+        />
 
         {/* ===== TARGET CARD ===== */}
         <Box bg="$white" p="$4" rounded="$2xl" shadow="$1">
@@ -96,14 +149,14 @@ const HomeScreen = () => {
           </HStack>
         </Box>
 
-        {/* ===== HISTORY ===== */}
+        {/* ===== HISTORY (PREVIEW) ===== */}
         <Box bg="$white" rounded="$2xl" shadow="$1">
           <HStack justifyContent="space-between" alignItems="center" p="$4">
             <Text fontSize="$lg" fontWeight="$bold" color="#1E293B">
-              History
+              History Hari Ini
             </Text>
 
-            <Pressable>
+            <Pressable onPress={() => router.push("/journalwater")}>
               <HStack alignItems="center" space="xs">
                 <Text color={PRIMARY}>View All</Text>
                 <ArrowRight size={16} color={PRIMARY} />
@@ -111,15 +164,32 @@ const HomeScreen = () => {
             </Pressable>
           </HStack>
 
-          <Box alignItems="center" py="$6">
-            <Box bg="#DBEAFE" p="$4" rounded="$full">
-              <Droplet size={32} color={PRIMARY} />
-            </Box>
+          {previewHistory.length === 0 ? (
+            <Box alignItems="center" py="$6">
+              <Box bg="#DBEAFE" p="$4" rounded="$full">
+                <Droplet size={32} color={PRIMARY} />
+              </Box>
 
-            <Text mt="$3" color="#64748B" textAlign="center">
-              You have no history of water intake today.
-            </Text>
-          </Box>
+              <Text mt="$3" color="#64748B" textAlign="center">
+                Belum ada catatan minum hari ini.
+              </Text>
+            </Box>
+          ) : (
+            <VStack space="sm" px="$4" pb="$4">
+              {previewHistory.map((item, index) => (
+                <HStack
+                  key={index}
+                  justifyContent="space-between"
+                  bg="#F8FAFC"
+                  p="$3"
+                  rounded="$lg"
+                >
+                  <Text>{item.amount} ml</Text>
+                  <Text color="#64748B">{item.time}</Text>
+                </HStack>
+              ))}
+            </VStack>
+          )}
         </Box>
 
         <Box h="$6" />

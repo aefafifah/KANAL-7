@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react";
-import { Box, Text, Button, ButtonText, HStack } from "@gluestack-ui/themed";
+import {
+  ScrollView,
+  Box,
+  Text,
+  Button,
+  ButtonText,
+  HStack,
+  VStack,
+} from "@gluestack-ui/themed";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Droplet, Award, Smile, Coffee, RefreshCcw } from "lucide-react-native";
+
+const PRIMARY = "#2563EB";
+const SOFT_BG = "#EEF2FF";
 
 export default function HydrationBadges({
-  title = "Badge Pencapaian Hidrasi 🏅",
+  title = "Badge Pencapaian Hidrasi",
   microBreakLabel = "Micro-break",
   moodLabel = "Mood Journal",
 }) {
@@ -15,7 +27,7 @@ export default function HydrationBadges({
     loadData();
   }, []);
 
-  // Load data dari AsyncStorage
+  // ===== LOGIKA ASLI (TIDAK DIUBAH) =====
   const loadData = async () => {
     const m = await AsyncStorage.getItem("microBreaks");
     const ml = await AsyncStorage.getItem("moodLogs");
@@ -26,28 +38,24 @@ export default function HydrationBadges({
     setBadges(b ? JSON.parse(b) : []);
   };
 
-  // Simpan data
   const saveAll = async (newMicro, newMood, newBadges) => {
     await AsyncStorage.setItem("microBreaks", String(newMicro));
     await AsyncStorage.setItem("moodLogs", String(newMood));
     await AsyncStorage.setItem("badges", JSON.stringify(newBadges));
   };
 
-  // Tambah micro-break
   const addMicroBreak = async () => {
     const newCount = microBreaks + 1;
     setMicroBreaks(newCount);
     saveAll(newCount, moodLogs, badges);
   };
 
-  // Tambah mood log
   const addMoodLog = async () => {
     const newCount = moodLogs + 1;
     setMoodLogs(newCount);
     saveAll(microBreaks, newCount, badges);
   };
 
-  // Cek badge baru
   const checkBadges = async () => {
     let newBadges = [...badges];
 
@@ -79,7 +87,6 @@ export default function HydrationBadges({
     saveAll(microBreaks, moodLogs, newBadges);
   };
 
-  // Reset data
   const resetBadges = async () => {
     await AsyncStorage.setItem("microBreaks", "0");
     await AsyncStorage.setItem("moodLogs", "0");
@@ -91,54 +98,103 @@ export default function HydrationBadges({
 
     alert("Semua badge dan progress berhasil direset!");
   };
+  // ===== END LOGIKA =====
 
   return (
-    <Box flex={1} p="$6">
-      <Text fontSize="$3xl" bold mb="$4">
-        {title}
-      </Text>
+    <ScrollView flex={1} bg={SOFT_BG}>
+      <VStack space="lg" p="$4">
 
-      {/* Progress */}
-      <Text mb="$2">{microBreakLabel}: {microBreaks}</Text>
-      <Text mb="$4">{moodLabel}: {moodLogs}</Text>
+        {/* ===== HEADER ===== */}
+        <Box alignItems="center">
+          <Box bg="#DBEAFE" p="$3" rounded="$full" mb="$2">
+            <Award size={28} color={PRIMARY} />
+          </Box>
+          <Text fontSize="$2xl" fontWeight="$bold" color="#1E293B">
+            {title}
+          </Text>
+          <Text color="#64748B" textAlign="center">
+            Kumpulkan badge dari kebiasaan sehatmu
+          </Text>
+        </Box>
 
-      {/* Buttons */}
-      <HStack space="md" mb="$4">
-        <Button onPress={addMicroBreak}>
-          <ButtonText>+ Micro Break</ButtonText>
-        </Button>
+        {/* ===== PROGRESS CARD ===== */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1">
+          <HStack justifyContent="space-between">
+            <HStack space="sm" alignItems="center">
+              <Coffee size={18} color={PRIMARY} />
+              <VStack>
+                <Text fontSize="$sm" color="#64748B">
+                  {microBreakLabel}
+                </Text>
+                <Text fontWeight="$bold">{microBreaks}</Text>
+              </VStack>
+            </HStack>
 
-        <Button onPress={addMoodLog}>
-          <ButtonText>+ Mood Log</ButtonText>
-        </Button>
-      </HStack>
+            <HStack space="sm" alignItems="center">
+              <Smile size={18} color="#FACC15" />
+              <VStack>
+                <Text fontSize="$sm" color="#64748B">
+                  {moodLabel}
+                </Text>
+                <Text fontWeight="$bold">{moodLogs}</Text>
+              </VStack>
+            </HStack>
+          </HStack>
+        </Box>
 
-      {/* Check Badges */}
-      <Button mb="$4" onPress={checkBadges}>
-        <ButtonText>Cek Badge Baru</ButtonText>
-      </Button>
+        {/* ===== ACTION BUTTONS ===== */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1">
+          <VStack space="sm">
+            <HStack space="sm">
+              <Button flex={1} bg={PRIMARY} onPress={addMicroBreak}>
+                <ButtonText>+ Micro Break</ButtonText>
+              </Button>
+              <Button flex={1} bg={PRIMARY} onPress={addMoodLog}>
+                <ButtonText>+ Mood Log</ButtonText>
+              </Button>
+            </HStack>
 
-      {/* Reset Button */}
-      <Button bgColor="$red500" onPress={resetBadges}>
-        <ButtonText>Reset Semua Badge</ButtonText>
-      </Button>
+            <Button variant="outline" onPress={checkBadges}>
+              <ButtonText>Cek Badge Baru</ButtonText>
+            </Button>
 
-      {/* Badge List */}
-      <Box mt="$6">
-        <Text fontSize="$xl" bold mb="$2">
-          Badge yang Sudah Didapat:
-        </Text>
+            <Button bg="#EF4444" onPress={resetBadges}>
+              <HStack space="xs" alignItems="center">
+                <RefreshCcw size={14} color="white" />
+                <ButtonText>Reset Semua Badge</ButtonText>
+              </HStack>
+            </Button>
+          </VStack>
+        </Box>
 
-        {badges.length === 0 ? (
-          <Text>Tidak ada badge.</Text>
-        ) : (
-          badges.map((b, index) => (
-            <Text key={index} fontSize="$lg">
-              • {b}
-            </Text>
-          ))
-        )}
-      </Box>
-    </Box>
+        {/* ===== BADGE LIST ===== */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1">
+          <Text fontSize="$lg" fontWeight="$bold" mb="$2">
+            Badge yang Sudah Didapat
+          </Text>
+
+          {badges.length === 0 ? (
+            <Text color="#64748B">Belum ada badge.</Text>
+          ) : (
+            <VStack space="sm">
+              {badges.map((b, index) => (
+                <HStack
+                  key={index}
+                  space="sm"
+                  alignItems="center"
+                  bg="#F8FAFC"
+                  p="$3"
+                  rounded="$lg"
+                >
+                  <Droplet size={16} color={PRIMARY} />
+                  <Text fontWeight="$medium">{b}</Text>
+                </HStack>
+              ))}
+            </VStack>
+          )}
+        </Box>
+
+      </VStack>
+    </ScrollView>
   );
 }
