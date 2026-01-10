@@ -22,7 +22,10 @@ import { LineChart } from "react-native-chart-kit";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import {
+  Sun,
+  Moon,
   Droplets,
+  Coffee,
   Flame,
   SunMedium,
   Snowflake,
@@ -191,27 +194,74 @@ const getDetailedRecommendation = (temperature, humidity, weatherDesc, avgTemp) 
   return recommendations;
 };
 
-const InfoHari = ({ hari, suhu, rekomLiter, weatherCode }) => {
+// ===================== KOMPONEN =====================
+
+const InfoHari = ({ hari, suhu, rekomLiter, weatherCode, index }) => {
+  const isHot = suhu >= 30;
   const weatherInfo = getWeatherDescription(weatherCode);
   const WeatherIcon = weatherInfo.icon;
-  
+  const label =
+    index === 0
+      ? "Hari ini"
+      : index === 1
+        ? "Besok"
+        : "Perkiraan";
+
   return (
-    <VStack
+    <HStack
+      bg="$white"
+      rounded="$2xl"
+      p="$4"
+      mb="$3"
       alignItems="center"
-      p={3}
-      bg="$blue50"
-      borderRadius={12}
-      m={1}
-      width={80}
-      shadow={1}
+      justifyContent="space-between"
+      shadow="$1"
+      borderLeftWidth={5}
+      borderLeftColor={isHot ? "#EF4444" : weatherInfo.color}
     >
-      <Text bold color="$blue800">
-        {hari}
-      </Text>
-      <WeatherIcon size={16} color={weatherInfo.color} />
-      <Text fontSize={10} color="$blue700">{suhu}°C</Text>
-      <Text fontSize={10} color="$blue600">{rekomLiter}L</Text>
-    </VStack>
+      {/* LEFT */}
+      <HStack space="sm" alignItems="center">
+        <WeatherIcon size={24} color={weatherInfo.color} />
+        <VStack>
+          <Text fontWeight="$bold" fontSize="$md" color="$blue900">
+            {hari}
+          </Text>
+          <Text fontSize="$xs" color="$gray500">
+            {label}
+          </Text>
+        </VStack>
+      </HStack>
+
+      {/* RIGHT */}
+      <HStack space="md" alignItems="center">
+        {/* SUHU */}
+        <Box
+          bg={isHot ? "#FEE2E2" : "#DBEAFE"}
+          px="$3"
+          py="$1"
+          rounded="$full"
+        >
+          <Text
+            fontWeight="$semibold"
+            color={isHot ? "#B91C1C" : "#1D4ED8"}
+          >
+            {suhu}°C
+          </Text>
+        </Box>
+
+        {/* AIR */}
+        <Box
+          bg="#EFF6FF"
+          px="$3"
+          py="$1"
+          rounded="$full"
+        >
+          <Text fontWeight="$semibold" color="#2563EB">
+            {rekomLiter} L
+          </Text>
+        </Box>
+      </HStack>
+    </HStack>
   );
 };
 
@@ -234,13 +284,14 @@ const ChartSuhuAir = ({ data, daerah }) => {
   };
 
   return (
-    <Center mt={4}>
-      <Heading size="sm" mb={2}>
-        Grafik Suhu & Rekomendasi Air ({daerah})
+    <Box bg="$white" rounded="$2xl" p="$4" shadow="$1" mx="$3" mt="$4">
+      <Heading size="sm" mb="$2">
+        Grafik Suhu & Rekomendasi ({daerah})
       </Heading>
+
       <LineChart
         data={chartData}
-        width={screenWidth - 20}
+        width={screenWidth - 64}
         height={250}
         chartConfig={{
           backgroundColor: "#e0f2fe",
@@ -251,14 +302,87 @@ const ChartSuhuAir = ({ data, daerah }) => {
           labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
         }}
         bezier
-        style={{
-          borderRadius: 16,
-          marginVertical: 8,
-        }}
+        style={{ borderRadius: 16 }}
       />
-    </Center>
+    </Box>
   );
 };
+
+const WeatherInfoCard = ({ weatherData, selectedDaerah, waterRecommendation }) => {
+  if (!weatherData) return null;
+  
+  const currentWeather = getWeatherDescription(weatherData.weather_code);
+  const WeatherIcon = currentWeather.icon;
+  
+  return (
+    <Box bg="$white" rounded="$2xl" p="$4" shadow="$1" mx="$3" mt="$4">
+      <Heading size="sm" mb="$3">Cuaca Saat Ini</Heading>
+      <HStack justifyContent="space-between" alignItems="center" mb="$4">
+        <VStack>
+          <HStack alignItems="center" space="sm">
+            <WeatherIcon size={32} color={currentWeather.color} />
+            <Text bold fontSize="$2xl" color="$blue900">
+              {weatherData.temperature_2m}°C
+            </Text>
+          </HStack>
+          <Text color="$blue700">{currentWeather.desc}</Text>
+          <Text fontSize="$sm" color="$gray500">{selectedDaerah.nama}</Text>
+        </VStack>
+        
+        <VStack alignItems="flex-end">
+          <Text fontSize="$sm" color="$gray500">Rekomendasi Air</Text>
+          <Text bold fontSize="$xl" color="#2563EB">{waterRecommendation}L</Text>
+          <Text fontSize="$xs" color="$gray500">per hari</Text>
+        </VStack>
+      </HStack>
+      
+      <HStack justifyContent="space-around" mt="$3" pt="$3" borderTopWidth={1} borderTopColor="$gray200">
+        <VStack alignItems="center">
+          <Droplets size={20} color="#4b5563" />
+          <Text fontSize="$xs" color="$gray600" mt="$1">Kelembaban</Text>
+          <Text bold fontSize="$sm">{weatherData.relative_humidity_2m}%</Text>
+        </VStack>
+        
+        <VStack alignItems="center">
+          <CloudRain size={20} color="#1d4ed8" />
+          <Text fontSize="$xs" color="$gray600" mt="$1">Curah Hujan</Text>
+          <Text bold fontSize="$sm">{weatherData.precipitation || 0}mm</Text>
+        </VStack>
+        
+        <VStack alignItems="center">
+          <Thermometer size={20} color="#dc2626" />
+          <Text fontSize="$xs" color="$gray600" mt="$1">Kode Cuaca</Text>
+          <Text bold fontSize="$sm">{weatherData.weather_code}</Text>
+        </VStack>
+      </HStack>
+    </Box>
+  );
+};
+
+const RecommendationCard = ({ recommendations }) => {
+  if (!recommendations || recommendations.length === 0) return null;
+  
+  return (
+    <Box bg="$white" rounded="$2xl" p="$4" shadow="$1" mx="$3" mt="$4">
+      <Heading size="sm" mb="$3">Rekomendasi Kesehatan</Heading>
+      <VStack space="$2">
+        {recommendations.map((rec, index) => (
+          <HStack key={index} space="sm" alignItems="flex-start">
+            <Text color="#2563EB" fontSize="$sm">•</Text>
+            <Text flex={1} fontSize="$sm" color="$gray700">
+              {rec}
+            </Text>
+          </HStack>
+        ))}
+      </VStack>
+      <Text fontSize="$xs" color="$gray500" mt="$3" textAlign="center">
+        Rekomendasi disesuaikan dengan kondisi cuaca saat ini
+      </Text>
+    </Box>
+  );
+};
+
+// ===================== SCREEN UTAMA =====================
 
 const Stats = () => {
   const [selectedDaerah, setSelectedDaerah] = useState(daerahJatim[0]);
@@ -267,7 +391,17 @@ const Stats = () => {
   const [loading, setLoading] = useState(true);
   const [forecastData, setForecastData] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [waterRecommendation, setWaterRecommendation] = useState("1.8");
   const router = useRouter();
+
+  // Data per jam untuk rekomendasi waktu
+  const dataPerJam = {
+    pagi: { suhu: 28, rekom: "0.5L air sebelum aktivitas", icon: Coffee },
+    siang: { suhu: 34, rekom: "1L air, hindari terik matahari", icon: Sun },
+    sore: { suhu: 30, rekom: "0.7L air setelah aktivitas", icon: Droplets },
+    malam: { suhu: 26, rekom: "0.4L air hangat sebelum tidur", icon: Moon },
+  };
+  const [waktuSekarang, setWaktuSekarang] = useState(null);
 
   // 🌤️ Fungsi untuk mengambil data cuaca dari Open-Meteo API
   const fetchWeatherData = async (latitude, longitude) => {
@@ -315,6 +449,14 @@ const Stats = () => {
         const currentHumidity = data.current.relative_humidity_2m;
         const currentWeatherCode = data.current.weather_code;
         const weatherInfo = getWeatherDescription(currentWeatherCode);
+        
+        // Hitung rekomendasi air saat ini
+        const waterRec = calculateWaterRecommendation(
+          currentTemp,
+          currentHumidity,
+          weatherInfo.desc
+        );
+        setWaterRecommendation(waterRec);
         
         // Hitung rata-rata suhu 5 hari
         const avgTemp = dailyForecast.reduce((sum, item) => sum + item.suhu, 0) / dailyForecast.length;
@@ -391,204 +533,167 @@ const Stats = () => {
     }
   }, [selectedDaerah]);
 
+  // Set waktu sekarang
+  useEffect(() => {
+    const jam = new Date().getHours();
+    let waktu = "pagi";
+    if (jam >= 11 && jam < 15) waktu = "siang";
+    else if (jam >= 15 && jam < 19) waktu = "sore";
+    else if (jam >= 19 || jam < 5) waktu = "malam";
+    setWaktuSekarang(dataPerJam[waktu]);
+  }, []);
+
   const ReminderBox = () => {
     const Icon = reminder.icon;
     return (
-      <Box mt={3} bg="$blue50" p={3} borderRadius={12} flexDirection="row" alignItems="center">
-        {Icon && <Icon size={20} color="#2563eb" style={{ marginRight: 8 }} />}
-        <Text color="$blue700" flexShrink={1}>
+      <HStack
+        bg="#DBEAFE"
+        p="$3"
+        rounded="$xl"
+        alignItems="center"
+        space="sm"
+        mt="$3"
+      >
+        {Icon && <Icon size={20} color="#2563EB" />}
+        <Text flexShrink={1} fontSize="$sm">
           {reminder.text}
         </Text>
-      </Box>
-    );
-  };
-
-  const WeatherInfoBox = () => {
-    if (!weatherData) return null;
-    
-    const currentWeather = getWeatherDescription(weatherData.weather_code);
-    const WeatherIcon = currentWeather.icon;
-    const waterRecommendation = calculateWaterRecommendation(
-      weatherData.temperature_2m,
-      weatherData.relative_humidity_2m,
-      currentWeather.desc
-    );
-    
-    return (
-      <Center mt={4}>
-        <VStack
-          alignItems="center"
-          bg="$blue100"
-          p={4}
-          borderRadius={16}
-          width={320}
-          shadow={2}
-        >
-          <HStack alignItems="center" mb={2}>
-            <WeatherIcon size={28} color={currentWeather.color} />
-            <Text bold fontSize={22} ml={2} color="$blue800">
-              {weatherData.temperature_2m}°C
-            </Text>
-            <VStack ml={3}>
-              <Text bold fontSize={14} color="$blue700">{currentWeather.desc}</Text>
-              <Text fontSize={12} color="$blue600">{selectedDaerah.nama}</Text>
-            </VStack>
-          </HStack>
-          
-          <HStack justifyContent="space-around" width="100%" mt={3}>
-            <VStack alignItems="center">
-              <Droplets size={20} color="#4b5563" />
-              <Text fontSize={12} color="$blue700">Kelembaban</Text>
-              <Text bold>{weatherData.relative_humidity_2m}%</Text>
-            </VStack>
-            
-            <VStack alignItems="center">
-              <Thermometer size={20} color="#dc2626" />
-              <Text fontSize={12} color="$blue700">Rekomendasi</Text>
-              <Text bold>{waterRecommendation}L</Text>
-              <Text fontSize={10} color="$blue600">air/hari</Text>
-            </VStack>
-            
-            {weatherData.precipitation > 0 && (
-              <VStack alignItems="center">
-                <CloudRain size={20} color="#1d4ed8" />
-                <Text fontSize={12} color="$blue700">Curah Hujan</Text>
-                <Text bold>{weatherData.precipitation}mm</Text>
-              </VStack>
-            )}
-          </HStack>
-        </VStack>
-      </Center>
-    );
-  };
-
-  const RecommendationBox = () => {
-    if (recommendations.length === 0) return null;
-    
-    return (
-      <Center mt={4} mb={4}>
-        <Heading size="sm" mb={3} color="$blue800">
-          Rekomendasi Kesehatan Berdasarkan Cuaca
-        </Heading>
-        <VStack
-          bg="$blue50"
-          p={4}
-          borderRadius={16}
-          width={screenWidth - 40}
-          shadow={1}
-        >
-          {recommendations.map((rec, index) => (
-            <HStack key={index} alignItems="flex-start" mb={2}>
-              <Text color="$blue700" fontSize={12} mr={2}>•</Text>
-              <Text color="$blue700" fontSize={12} flex={1}>
-                {rec}
-              </Text>
-            </HStack>
-          ))}
-          
-          <Text fontSize={10} color="$blue600" mt={3} textAlign="center">
-            Rekomendasi ini disesuaikan dengan suhu, kelembaban, dan kondisi cuaca saat ini.
-          </Text>
-        </VStack>
-      </Center>
+      </HStack>
     );
   };
 
   return (
-    <ScrollView>
-      <Center p={4} bg="$blue100" borderBottomRadius={20}>
-        <Heading color="$blue900" mb={2}>
-          Statistika Cuaca Jawa Timur
-        </Heading>
-        <Text color="$blue800">
-          {dayjs().format("dddd, DD MMMM YYYY")}
-        </Text>
-        <ReminderBox />
-      </Center>
+    <ScrollView style={{ backgroundColor: "#EEF2FF" }}>
+      <VStack space="lg" py="$4">
 
-      {/* Dropdown Pilihan Daerah */}
-      <Center mt={4}>
-        <Text mb={2} color="$blue700" bold>
-          Pilih Daerah
-        </Text>
-        <Select 
-          selectedValue={selectedDaerah.nama} 
-          onValueChange={(value) => {
-            const daerah = daerahJatim.find(d => d.nama === value);
-            setSelectedDaerah(daerah);
-          }}
-        >
-          <SelectTrigger variant="outline" width={250}>
-            <SelectInput placeholder="Pilih daerah" />
-          </SelectTrigger>
-          <SelectPortal>
-            <SelectBackdrop />
-            <SelectContent>
-              <SelectDragIndicatorWrapper>
-                <SelectDragIndicator />
-              </SelectDragIndicatorWrapper>
-              {daerahJatim.map((daerah) => (
-                <SelectItem key={daerah.nama} label={daerah.nama} value={daerah.nama} />
-              ))}
-            </SelectContent>
-          </SelectPortal>
-        </Select>
-      </Center>
+        {/* HEADER */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+          <Heading color="$blue900">
+            Statistika Cuaca Jawa Timur
+          </Heading>
+          <Text color="$blue800">
+            {dayjs().format("dddd, DD MMMM YYYY")}
+          </Text>
+          <ReminderBox />
+        </Box>
 
-      {/* Info cuaca saat ini */}
-      {loading ? (
-        <Center mt={4}>
-          <Text>Memuat data cuaca...</Text>
-        </Center>
-      ) : (
-        <>
-          <WeatherInfoBox />
-          
-          {/* Rekomendasi Detail */}
-          <RecommendationBox />
-          
-          {/* Info rata-rata suhu */}
-          {forecastData.length > 0 && (
-            <Center mt={3}>
-              <Text color="$blue800">
-                Rata-rata suhu 5 hari di <Text bold>{selectedDaerah.nama}</Text>:{" "}
-                <Text bold>
-                  {(
-                    forecastData.reduce((sum, item) => sum + item.suhu, 0) / 
-                    forecastData.length
-                  ).toFixed(1)}°C
-                </Text>
-              </Text>
-            </Center>
-          )}
-
-          {/* Info per hari */}
-          {forecastData.length > 0 && (
-            <>
-              <Heading size="sm" textAlign="center" mt={4} color="$blue800">
-                Prakiraan 5 Hari ke Depan
-              </Heading>
-              <HStack justifyContent="center" flexWrap="wrap" my={4}>
-                {forecastData.map((item, index) => (
-                  <InfoHari key={index} {...item} />
+        {/* SELECT DAERAH */}
+        <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+          <Text bold mb="$2">Pilih Daerah</Text>
+          <Select
+            selectedValue={selectedDaerah.nama}
+            onValueChange={(value) => {
+              const daerah = daerahJatim.find(d => d.nama === value);
+              setSelectedDaerah(daerah);
+            }}
+          >
+            <SelectTrigger variant="outline">
+              <SelectInput placeholder="Pilih daerah" />
+            </SelectTrigger>
+            <SelectPortal>
+              <SelectBackdrop />
+              <SelectContent>
+                <SelectDragIndicatorWrapper>
+                  <SelectDragIndicator />
+                </SelectDragIndicatorWrapper>
+                {daerahJatim.map((daerah) => (
+                  <SelectItem key={daerah.nama} label={daerah.nama} value={daerah.nama} />
                 ))}
-              </HStack>
-            </>
-          )}
+              </SelectContent>
+            </SelectPortal>
+          </Select>
 
-          <ChartSuhuAir data={forecastData} daerah={selectedDaerah.nama} />
-        </>
-      )}
-      
-      <Button mt="$8" size="lg" bg="$blue600" borderRadius="$2xl" onPress={() => router.push("../jurnalwater")}>
-        <Droplets color="white" size={20} />
-        <ButtonText ml="$2" color="white">Buka Jurnal Minum</ButtonText>
-      </Button>
-      
-      <Button mt="$8" size="lg" bg="$blue600" borderRadius="$2xl" onPress={() => router.push("../challengewater")}>
-        <Droplets color="white" size={20} />
-        <ButtonText ml="$2" color="white">Challenge Minum</ButtonText>
-      </Button>
+          {forecastData.length > 0 && (
+            <Text mt="$3" color="$blue800">
+              Rata-rata suhu 5 hari:{" "}
+              <Text bold>
+                {(
+                  forecastData.reduce((sum, item) => sum + item.suhu, 0) / 
+                  forecastData.length
+                ).toFixed(1)}°C
+              </Text>
+            </Text>
+          )}
+        </Box>
+
+        {/* CUACA SAAT INI */}
+        {loading ? (
+          <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3" alignItems="center">
+            <Text>Memuat data cuaca...</Text>
+          </Box>
+        ) : (
+          <>
+            <WeatherInfoCard 
+              weatherData={weatherData} 
+              selectedDaerah={selectedDaerah}
+              waterRecommendation={waterRecommendation}
+            />
+
+            {/* REKOMENDASI DETAIL */}
+            <RecommendationCard recommendations={recommendations} />
+
+            {/* INFO HARIAN */}
+            {forecastData.length > 0 && (
+              <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+                <Text bold mb="$3">Prakiraan 5 Hari ke Depan</Text>
+                <VStack>
+                  {forecastData.map((item, index) => (
+                    <InfoHari 
+                      key={index} 
+                      {...item} 
+                      index={index} 
+                    />
+                  ))}
+                </VStack>
+              </Box>
+            )}
+
+            {/* CHART */}
+            {forecastData.length > 0 && (
+              <ChartSuhuAir data={forecastData} daerah={selectedDaerah.nama} />
+            )}
+          </>
+        )}
+
+        {/* REKOMENDASI WAKTU SAAT INI */}
+        {waktuSekarang && (
+          <Box bg="$white" p="$4" rounded="$2xl" shadow="$1" mx="$3">
+            <Heading size="sm" mb="$2">
+              Rekomendasi Sekarang 🕒
+            </Heading>
+            <VStack alignItems="center">
+              <waktuSekarang.icon size={26} color="#2563EB" />
+              <Text bold mt="$2">{dayjs().format("HH:mm")} WIB</Text>
+              <Text fontSize={12} textAlign="center" mt="$1">
+                {waktuSekarang.rekom}
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
+        {/* NAVIGASI KE FITUR LAIN */}
+        <VStack space="md" mx="$3" mb="$10">
+          <Button 
+            size="lg" 
+            bg="$blue600" 
+            borderRadius="$2xl" 
+            onPress={() => router.push("../jurnalwater")}
+          >
+            <Droplets color="white" size={20} />
+            <ButtonText ml="$2" color="white">Buka Jurnal Minum</ButtonText>
+          </Button>
+          
+          <Button 
+            size="lg" 
+            bg="$blue600" 
+            borderRadius="$2xl" 
+            onPress={() => router.push("../challengewater")}
+          >
+            <Droplets color="white" size={20} />
+            <ButtonText ml="$2" color="white">Challenge Minum</ButtonText>
+          </Button>
+        </VStack>
+      </VStack>
     </ScrollView>
   );
 };
