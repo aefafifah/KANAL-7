@@ -1,8 +1,10 @@
 import { useState, useCallback } from "react";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+
 import {
   Box,
   Text,
@@ -22,6 +24,7 @@ import {
   SelectItem,
   Divider,
 } from "@gluestack-ui/themed";
+
 import { ChevronDown, Pencil, ChevronRight, Camera } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { auth, db } from "../../src/config/firebase";
@@ -44,9 +47,9 @@ export default function PersonalInfo() {
     photoUrl: "",
   });
 
-  /* =====================
-     LOAD PROFILE
-  ===================== */
+  // =====================
+  // LOAD PROFILE
+  // =====================
   useFocusEffect(
     useCallback(() => {
       loadProfile();
@@ -64,19 +67,34 @@ export default function PersonalInfo() {
         birthdate: p.birthdate || "",
         photoUrl: p.photoUrl || "",
       });
+      return;
+    }
+
+    const localUser = await AsyncStorage.getItem("user");
+    if (localUser) {
+      const u = JSON.parse(localUser);
+      setProfile((prev) => ({
+        ...prev,
+        username: u.username || "",
+        email: u.email || "",
+      }));
     }
   };
 
-  /* =====================
-     IMAGE PICKER
-  ===================== */
+  // =====================
+  // IMAGE PICKER
+  // =====================
   const pickImage = async () => {
     if (isLocked) return;
 
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      alert("Izin galeri diperlukan");
+      return;
+    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -90,18 +108,41 @@ export default function PersonalInfo() {
     }
   };
 
-  /* =====================
-     SAVE PROFILE
-  ===================== */
+  // =====================
+  // DATE PICKER HANDLER
+  // =====================
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+
+    if (selectedDate) {
+      const formatted = selectedDate.toISOString().split("T")[0];
+      setProfile((p) => ({
+        ...p,
+        birthdate: formatted,
+      }));
+    }
+  };
+
+  // =====================
+  // SAVE PROFILE
+  // =====================
   const saveProfile = async () => {
     if (!uid) return;
 
+    const personalInfo = {
+      username: profile.username,
+      email: profile.email,
+      gender: profile.gender || "",
+      birthdate: profile.birthdate || "",
+      photoUrl: profile.photoUrl || "",
+    };
+
     await AsyncStorage.setItem(
       "personal-info",
-      JSON.stringify(profile)
+      JSON.stringify(personalInfo)
     );
 
-    await set(ref(db, `users/${uid}/profile`), profile);
+    await set(ref(db, `users/${uid}/profile`), personalInfo);
 
     setIsLocked(true);
   };
@@ -111,35 +152,52 @@ export default function PersonalInfo() {
       <Stack.Screen options={{ title: "Personal Info" }} />
 
       <Box flex={1} bg="#F1F5F9">
-        {/* HEADER */}
+        {/* ===== HEADER ===== */}
         <Box bg={PRIMARY} pt="$10" pb="$12" roundedBottom="$3xl">
-          <VStack alignItems="center">
+          <VStack alignItems="center" space="sm">
             <Pressable onPress={pickImage}>
-              <Avatar size="xl" bg={PRIMARY}>
-                {profile.photoUrl ? (
-                  <Avatar.Image source={{ uri: profile.photoUrl }} />
-                ) : (
-                  <AvatarFallbackText>
-                    {profile.username?.[0]?.toUpperCase()}
-                  </AvatarFallbackText>
+              <Box bg="$white" p="$1" rounded="$full">
+                <Avatar size="xl" bg={PRIMARY}>
+                  {profile.photoUrl ? (
+                    <Avatar.Image source={{ uri: profile.photoUrl }} />
+                  ) : (
+                    <AvatarFallbackText>
+                      {profile.username?.charAt(0)?.toUpperCase()}
+                    </AvatarFallbackText>
+                  )}
+                </Avatar>
+
+                {!isLocked && (
+                  <Box
+                    position="absolute"
+                    bottom={0}
+                    right={0}
+                    bg={PRIMARY}
+                    p="$1"
+                    rounded="$full"
+                  >
+                    <Camera size={14} color="white" />
+                  </Box>
                 )}
-              </Avatar>
+              </Box>
             </Pressable>
 
-            <Text color="$white" fontWeight="$bold" mt="$2">
+            <Text fontSize="$lg" fontWeight="$bold" color="$white">
               @{profile.username}
             </Text>
-            <Text color="#DBEAFE">{profile.email}</Text>
+
+            <Text fontSize="$sm" color="#DBEAFE">
+              {profile.email}
+            </Text>
           </VStack>
         </Box>
 
-        {/* CONTENT */}
-        <VStack p="$4" mt="$-8" space="lg">
+        {/* ===== CONTENT ===== */}
+        <VStack p="$4" space="lg" mt="$-8">
           {/* ACCOUNT */}
           <Section title="Account">
             <Pressable
               disabled={isLocked}
-              opacity={isLocked ? 0.4 : 1}
               onPress={() => router.push("/profile/editusername")}
             >
               <Row label="Username" value={profile.username} arrow />
@@ -153,7 +211,6 @@ export default function PersonalInfo() {
 
             <Pressable
               disabled={isLocked}
-              opacity={isLocked ? 0.4 : 1}
               onPress={() => router.push("/profile/editpassword")}
             >
               <Row label="Password" value="••••••••" arrow />
@@ -164,7 +221,9 @@ export default function PersonalInfo() {
           <Section title="Personal Information">
             <Row label="Gender">
               {isLocked ? (
-                <Text>{profile.gender || "Not set"}</Text>
+                <Text fontWeight="$medium" color="#0F172A">
+                  {profile.gender || "Not set"}
+                </Text>
               ) : (
                 <Select
                   selectedValue={profile.gender}
@@ -176,6 +235,7 @@ export default function PersonalInfo() {
                     <SelectInput placeholder="Select gender" />
                     <SelectIcon as={ChevronDown} />
                   </SelectTrigger>
+
                   <SelectPortal>
                     <SelectContent>
                       <SelectItem label="Male" value="Male" />
@@ -189,17 +249,22 @@ export default function PersonalInfo() {
 
             <Divider />
 
-            <Pressable
-              disabled={isLocked}
-              opacity={isLocked ? 0.4 : 1}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Row
-                label="Birthdate"
-                value={profile.birthdate || "Select date"}
-                arrow={!isLocked}
-              />
-            </Pressable>
+            <Row label="Birthdate">
+              {isLocked ? (
+                <Text fontWeight="$medium" color="#0F172A">
+                  {profile.birthdate || "Not set"}
+                </Text>
+              ) : (
+                <Pressable onPress={() => setShowDatePicker(true)}>
+                  <HStack alignItems="center" space="xs">
+                    <Text fontWeight="$medium" color="#0F172A">
+                      {profile.birthdate || "Select date"}
+                    </Text>
+                    <ChevronRight size={16} color="#94A3B8" />
+                  </HStack>
+                </Pressable>
+              )}
+            </Row>
           </Section>
 
           {/* ACTION */}
@@ -216,7 +281,9 @@ export default function PersonalInfo() {
             </Button>
           ) : (
             <Button bg={PRIMARY} onPress={saveProfile}>
-              <ButtonText color="$white">Save Changes</ButtonText>
+              <ButtonText color="$white">
+                Save Changes
+              </ButtonText>
             </Button>
           )}
         </VStack>
@@ -230,16 +297,9 @@ export default function PersonalInfo() {
                 : new Date()
             }
             mode="date"
-            display="spinner"
-            onChange={(_, date) => {
-              setShowDatePicker(false);
-              if (date) {
-                setProfile({
-                  ...profile,
-                  birthdate: date.toISOString().split("T")[0],
-                });
-              }
-            }}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={handleDateChange}
+            maximumDate={new Date()}
           />
         )}
       </Box>
@@ -247,11 +307,19 @@ export default function PersonalInfo() {
   );
 }
 
-/* COMPONENT */
+/* ===== KOMPONEN ===== */
+
 function Section({ title, children }) {
   return (
-    <Box bg="$white" p="$4" rounded="$xl" shadow="$2">
-      <Text fontWeight="$bold" mb="$3">
+    <Box
+      bg="$white"
+      rounded="$xl"
+      p="$4"
+      shadow="$2"
+      borderLeftWidth={4}
+      borderLeftColor={PRIMARY}
+    >
+      <Text fontWeight="$bold" mb="$3" color="#1E293B">
         {title}
       </Text>
       {children}
@@ -261,12 +329,19 @@ function Section({ title, children }) {
 
 function Row({ label, value, arrow, children }) {
   return (
-    <HStack justifyContent="space-between" py="$2">
+    <HStack alignItems="center" justifyContent="space-between" py="$2">
       <Text color="#64748B">{label}</Text>
-      {children || (
-        <HStack alignItems="center">
-          <Text>{value}</Text>
-          {arrow && <ChevronRight size={16} />}
+
+      {children ? (
+        children
+      ) : (
+        <HStack alignItems="center" space="xs">
+          <Text fontWeight="$medium" color="#0F172A">
+            {value}
+          </Text>
+          {arrow && (
+            <ChevronRight size={16} color="#94A3B8" />
+          )}
         </HStack>
       )}
     </HStack>

@@ -129,21 +129,6 @@ export default function Login() {
           </Input>
         </VStack>
 
-        {/* SOCIAL BUTTONS*/}
-        <VStack w="100%" space="sm" mt="$4">
-          {[
-            "Continue with Google",
-          ].map((item, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              borderRadius="$full"
-            >
-              <ButtonText>{item}</ButtonText>
-            </Button>
-          ))}
-        </VStack>
-
         {/* MAIN BUTTON */}
         <Button
           w="100%"
