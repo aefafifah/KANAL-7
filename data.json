@@ -1,0 +1,116 @@
+{
+  "user": {
+    "coin": 50,
+    "points": 150,
+    "completedChallenges": [],
+    "streak": 0,
+    "lastActiveDate": "2026-01-10T08:39:45.527Z",
+    "dailyProgress": 0,
+    "mood": "Semangat",
+    "settings": {
+      "maxDailyChallenges": 5,
+      "useApi": true,
+      "notificationEnabled": true
+    }
+  },
+  "challenges": [
+    {
+      "id": 1,
+      "title": "Minum 8 gelas air hari ini",
+      "reward": 10,
+      "points": 20,
+      "category": "daily",
+      "icon": "💧",
+      "description": "Penuhi kebutuhan hidrasi harian dengan minum 8 gelas air",
+      "difficulty": "easy",
+      "duration": "daily",
+      "target": 8
+    },
+    {
+      "id": 2,
+      "title": "Minum air sebelum makan",
+      "reward": 5,
+      "points": 10,
+      "category": "daily",
+      "icon": "🍽️",
+      "description": "Minum 1 gelas air 30 menit sebelum makan",
+      "difficulty": "easy",
+      "duration": "daily",
+      "target": 3
+    },
+    {
+      "id": 3,
+      "title": "Ganti minuman manis dengan air",
+      "reward": 15,
+      "points": 25,
+      "category": "healthy",
+      "icon": "🚫",
+      "description": "Hindari minuman manis dan ganti dengan air putih",
+      "difficulty": "medium",
+      "duration": "daily",
+      "target": 1
+    },
+    {
+      "id": 4,
+      "title": "Minum air setelah bangun tidur",
+      "reward": 5,
+      "points": 15,
+      "category": "daily",
+      "icon": "⏰",
+      "description": "Minum 1-2 gelas air setelah bangun tidur",
+      "difficulty": "easy",
+      "duration": "daily",
+      "target": 1
+    },
+    {
+      "id": 5,
+      "title": "Selesaikan 2Liter sebelum jam 6",
+      "reward": 20,
+      "points": 30,
+      "category": "hard",
+      "icon": "🎯",
+      "description": "Minum 2 liter air sebelum jam 6 sore",
+      "difficulty": "hard",
+      "duration": "daily",
+      "target": 2000
+    },
+    {
+      "id": 6,
+      "title": "Minum tanpa plastik sehari",
+      "reward": 25,
+      "points": 40,
+      "category": "eco",
+      "icon": "🌱",
+      "description": "Hindari menggunakan botol plastik sekali pakai",
+      "difficulty": "medium",
+      "duration": "daily",
+      "target": 1
+    },
+    {
+      "id": 7,
+      "title": "Minum air setiap 2 jam",
+      "reward": 15,
+      "points": 25,
+      "category": "discipline",
+      "icon": "⏱️",
+      "description": "Minum segelas air setiap 2 jam",
+      "difficulty": "medium",
+      "duration": "daily",
+      "target": 8
+    },
+    {
+      "id": 8,
+      "title": "Bawa botol minum sendiri",
+      "reward": 10,
+      "points": 20,
+      "category": "eco",
+      "icon": "🥤",
+      "description": "Bawa botol minum reusable saat bepergian",
+      "difficulty": "easy",
+      "duration": "daily",
+      "target": 1
+    }
+  ],
+  "history": [],
+  "achievements": []
+}
